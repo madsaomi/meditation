@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Тихий ум — медитация и дыхание</title>
+  <meta name="description" content="Спокойное приложение для медитации: дыхательные практики, таймер, тихие звуки и мудрые мысли. Всё содержимое приходит с внешних API."/>
+  <link rel="manifest" href="manifest.webmanifest?v=37"/>
+  <meta name="theme-color" id="themeColor" content="#eceff3"/>
+  <meta property="og:title" content="Тихий ум — медитация и дыхание"/>
+  <meta property="og:description" content="Спокойные дыхательные практики, таймер, тихие звуки и мудрые мысли с внешних API."/>
+  <meta property="og:type" content="website"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='36' fill='none' stroke='%236f9e8f' stroke-width='7'/><circle cx='50' cy='50' r='17' fill='%236f9e8f'/></svg>"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@1,500;1,600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css?v=37"/>
+</head>
+<body>
+
+  <!-- Плавающая шапка -->
+  <header class="topbar">
+    <div class="brand">🧘 Тихий&nbsp;ум</div>
+    <nav class="tb-nav" aria-label="Разделы">
+      <a href="#breath">Дыхание</a>
+      <a href="#techniques">Техники</a>
+      <a href="#timer">Таймер</a>
+      <a href="#sounds">Звуки</a>
+    </nav>
+    <div class="tb-actions">
+      <div class="sound-wave" id="soundWave" title="Играют звуки" aria-hidden="true" hidden><i></i><i></i><i></i></div>
+      <span class="streak-pill" title="Дней подряд">🔥 <b id="statStreakMini">0</b></span>
+      <button class="chip icon-chip" id="voiceBtn" aria-pressed="false" title="Голосовые подсказки" aria-label="Голосовые подсказки">🔇</button>
+      <button class="chip" id="themeBtn" title="Переключить тему день/ночь">☾ Ночь</button>
+      <button class="chip" id="focusBtn" title="Скрыть всё, оставить только дыхание">⛶ Фокус</button>
+      <button class="chip icon-chip" id="paletteBtn" title="Пульт команд (Ctrl+K)" aria-label="Пульт команд">🔍</button>
+      <button class="chip icon-chip" id="settingsBtn" title="Настройки" aria-haspopup="true" aria-expanded="false" aria-label="Настройки">⚙</button>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <!-- Герой — дыхание -->
+    <section id="breath" class="hero">
+      <h1 class="hero-title" id="greetTitle">Добрый день 👋</h1>
+      <div class="hero-sub" id="timeTag">…</div>
+
+      <div class="breath-stage">
+        <div class="breath-ring r1"></div>
+        <div class="breath-ring r2"></div>
+        <svg class="phase-arc" viewBox="0 0 200 200" aria-hidden="true">
+          <circle id="phaseArc" cx="100" cy="100" r="94" pathLength="100"/>
+        </svg>
+        <div class="breath-circle idle" id="breathCircle">
+          <div class="breath-label" id="breathLabel">Готовы?</div>
+        </div>
+      </div>
+
+      <div class="chips" id="patternChips"></div>
+      <p class="muted small" id="patternHint"></p>
+      <div class="fx-row">
+        <button class="chip" id="breathFxChip" aria-pressed="false" title="Едва слышный вдох-выдох и лёгкий вибро-такт на смене фаз">🌬 Звук и вибро при смене фаз</button>
+      </div>
+      <button class="btn primary big" id="breathBtn">Начать дыхание</button>
+      <div class="cycles">Циклов: <b id="cycleCount">0</b></div>
+    </section>
+
+    <!-- Мысль дня -->
+    <section id="quote" class="card center reveal" style="--i:0">
+      <div class="card-head"><h2><span class="num">01</span>Мысль дня</h2><span class="tag" id="quoteSource">загружаем…</span></div>
+      <blockquote id="quoteText" class="quote skel">Загружаем мысль с API…</blockquote>
+      <div class="author" id="quoteAuthor"></div>
+      <div class="btn-row center-row">
+        <button class="btn ghost" id="quoteBtn">Ещё мысль</button>
+        <button class="btn ghost" id="quoteSay">🎧 Послушать</button>
+        <button class="chip icon-chip" id="quoteCopy" title="Скопировать мысль в буфер обмена" aria-label="Скопировать мысль">⧉</button>
+      </div>
+    </section>
+
+    <!-- Быстрые техники -->
+    <section id="techniques" class="card reveal" style="--i:1">
+      <div class="card-head"><h2><span class="num">02</span>Быстрые техники</h2></div>
+      <p class="muted">Короткая практика на один раз: шаги идут сами, голос ведёт вас. Можно закрыть глаза и просто слушать.</p>
+      <div class="tech-row" id="techRow"></div>
+    </section>
+
+    <!-- Таймер -->
+    <section id="timer" class="card reveal" style="--i:2">
+      <div class="card-head"><h2><span class="num">03</span>Таймер</h2><span class="tag">мягкий звон в конце</span></div>
+      <div class="timer-split">
+        <div class="timer-stage">
+          <svg viewBox="0 0 220 220" class="ring" aria-hidden="true">
+            <defs>
+              <linearGradient id="gRing" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" style="stop-color: var(--accent)"/>
+                <stop offset="1" style="stop-color: var(--accent2)"/>
+              </linearGradient>
+            </defs>
+            <circle class="ring-bg" cx="110" cy="110" r="88"/>
+            <circle class="ring-val" id="ringVal" cx="110" cy="110" r="88"/>
+          </svg>
+          <div class="timer-center" id="timerText">05:00</div>
+        </div>
+        <div class="timer-side">
+          <p class="muted">Выберите длительность, закройте глаза и просто дышите. В конце — колокольчик, без резкости.</p>
+          <div class="chips" id="timerChips"></div>
+          <div class="mix-row">
+            <span class="mix-label">Сценарии:</span>
+            <div class="chips" id="sceneChips"></div>
+          </div>
+          <div class="mix-row">
+            <span class="mix-label">Тихий фон:</span>
+            <div class="chips" id="ambientChips"></div>
+          </div>
+          <div class="fx-row left">
+            <button class="chip" id="syncBreathChip" aria-pressed="false" title="Во время сеанса идёт мягкий дыхательный цикл">🌬 Дыхание вместе с таймером</button>
+          </div>
+          <div class="mix-row">
+            <span class="mix-label">🔔 Якорь:</span>
+            <div class="chips" id="anchorChips"></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn primary" id="timerBtn">Старт</button>
+            <button class="btn ghost" id="timerReset">Сброс</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Звуки -->
+    <section id="sounds" class="card reveal" style="--i:3">
+      <div class="card-head"><h2><span class="num">04</span>Звуки</h2><span class="tag">12 источников</span></div>
+      <p class="muted">Смешивайте источники как угодно: природа синтезируется прямо в браузере, музыка приходит через API. Или возьмите готовый микс:</p>
+      <div class="mix-row">
+        <span class="mix-label">Миксы:</span>
+        <div class="chips" id="mixChips"></div>
+        <span class="key-hint">1–9 — быстрое переключение звуков</span>
+      </div>
+      <div class="sound-grid" id="soundGrid">
+        <button class="sound" data-sound="rain" title="Ровный монотонный дождь — для сна и фокуса"><span class="sound-ico">🌧</span><span class="sound-name">Дождь</span><span class="sound-eq"><i></i><i></i><i></i></span></button>
+        <button class="sound" data-sound="stream" title="Лёгкое журчание ручья"><span class="sound-ico">🏞</span><span class="sound-name">Ручей</span><span class="sound-eq"><i></i><i></i><i></i></span></button>
+        <button class="sound" data-sound="ocean" title="Медленные приливы и отливы"><span class="sound-ico">🌊</span><span class="sound-name">Океан</span><span class="sound-eq"><i></i><i></i><i></i></span></button>
+        <button class="sound" data-sound="wind" title="Прохладный ветер в листве"><span class="sound-ico">🌬</span><span class="sound-name">Ветер</span><span class="sound-eq"><i></i><i></i><i></i></span></button>
+        <button class="sound" data-sound="fire" title="Треск и шипение костра"><span class="sound-ico">🔥</span><span class="sound-name">Костер</span><span class="sound-eq"><i></i><i></i><i></i></span></button>
+        <button class="sound" data-sound="thunder" title="Далёкие раскаты грома"><span class="sound-ico">⛈</span><span class="sound-name">Гроза</span><span class="sound-eq"><i></i><i></i><i></i></span></button>
+        <button class="sound" data-sound="crickets" title="Ночное стрекотание сверчков"><span class="sound-ico">🦗</span><span class="sound-name">Сверчки</span><span class="sound-eq"><i></i><i></i><i></i></span></button>
+        <button class="sound" data-sound="birds" title="Утренние трели птиц"><span class="sound-ico">🐦</span><span class="sound-name">Птицы</span><span class="sound-eq"><i></i><i></i><i></i></span></button>
+        <button class="sound" data-sound="bowl" title="Удар по тибетской чаше каждые 10 секунд"><span class="sound-ico">🔔</span><span class="sound-name">Колокол</span><span class="sound-eq"><i></i><i></i><i></i></span></button>
+        <button class="sound" data-sound="chimes" title="Ветряные колокольчики с редкими перезвонами"><span class="sound-ico">🎐</span><span class="sound-name">Колокольчики</span><span class="sound-eq"><i></i><i></i><i></i></span></button>
+        <button class="sound" data-sound="noise" title="Ровный белый шум — глушит отвлекающие звуки"><span class="sound-ico">💨</span><span class="sound-name">Белый шум</span><span class="sound-eq"><i></i><i></i><i></i></span></button>
+        <button class="sound" data-sound="music" title="Случайный трек SoundHelix — без ключа API"><span class="sound-ico">🎵</span><span class="sound-name">Музыка</span><span class="sound-eq"><i></i><i></i><i></i></span></button>
+      </div>
+      <div class="track-now" id="trackNow" hidden>🎵 Сейчас играет: <b id="trackName">SoundHelix</b></div>
+      <label class="vol">Громкость
+        <input id="volume" type="range" min="0" max="100" value="60"/>
+      </label>
+      <div class="sleep-row">
+        <span class="sleep-label">💤 Сон:</span>
+        <div class="chips" id="sleepChips"></div>
+      </div>
+      <div class="sleep-row">
+        <span class="sleep-label">🎧 Пространство:</span>
+        <div class="chips">
+          <button class="chip" id="spatialChip" aria-pressed="true" title="У каждого звука своё место в стереопанораме; у звуков лёгкая случайность при каждом запуске">Стерео-звук</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <span>Данные: Wikiquote · Advice Slip · DummyJSON · MyMemory · SoundHelix · Web Audio API</span>
+      <span>Практикуйте с ♥ ежедневно</span>
+    </footer>
+  </main>
+
+  <!-- Оверлей быстрых техник -->
+  <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-label="Практика" hidden>
+    <div class="ov-card">
+      <span class="tag" id="ovTitle"></span>
+      <div class="ov-step" id="ovText"></div>
+      <div class="ov-dots" id="ovDots"></div>
+      <button class="btn ghost" id="ovStop">Закончить</button>
+    </div>
+  </div>
+
+  <button class="btn ghost focus-exit" id="focusExit">Выйти из фокуса</button>
+
+  <div id="toast" role="status"></div>
+
+  <div class="settings-panel" id="settingsPanel" role="dialog" aria-label="Настройки" hidden>
+    <div class="sp-title">⚙ Настройки</div>
+    <div class="sp-group"><span class="sp-label">Тема</span><div class="chips" id="spTheme"></div></div>
+    <div class="sp-group"><span class="sp-label">Голосовые подсказки</span><div class="chips" id="spVoice"></div></div>
+    <div class="sp-group"><span class="sp-label">Тихий фон сеанса</span><div class="chips" id="spAmbient"></div></div>
+    <div class="sp-group"><span class="sp-label">Дыхание и отклики</span><div class="chips" id="spFx"></div></div>
+    <div class="sp-group"><span class="sp-label">🔔 Якорь — напоминание во время сеанса</span><div class="chips" id="spAnchor"></div></div>
+    <div class="sp-group"><span class="sp-label">🌙 Спящий экран — затемнение для ночи</span>
+      <input type="range" id="dimRange" class="dim-range" min="0" max="70" step="5" value="0" aria-label="Затемнение экрана"/>
+    </div>
+    <div class="sp-group"><button class="chip" id="nmBtn" title="Прикроватный экран: время и дышащий свет">🕯 Ночник</button></div>
+    <p class="sp-season" id="spSeason"></p>
+    <p class="sp-hint">Клавиши: пробел — дыхание · Ctrl+K — пульт команд · N — ночник · Esc — выход · 1–9 — звуки</p>
+  </div>
+
+  <!-- 🕯 Ночник: прикроватный экран -->
+  <div class="nightmode" id="nightMode" role="dialog" aria-label="Ночник" hidden>
+    <div class="nm-glow" id="nmGlow" aria-hidden="true"></div>
+    <div class="nm-time" id="nmTime">00:00</div>
+    <div class="nm-hint">Тап или Esc — выйти</div>
+  </div>
+
+  <!-- Пульт команд (⌘K / Ctrl+K) -->
+  <div class="palette-backdrop" id="paletteBackdrop" hidden>
+    <div class="palette" role="dialog" aria-label="Пульт команд">
+      <input id="paletteInput" type="text" placeholder="Команда: океан, сон, таймер 10, ночь…" autocomplete="off" spellcheck="false"/>
+      <div class="palette-list" id="paletteList" role="listbox"></div>
+      <p class="palette-hint">↑↓ — выбор · Enter — выполнить · Esc — закрыть</p>
+    </div>
+  </div>
+
+  <script src="config.js?v=37"></script>
+  <script src="app.js?v=37"></script>
+</body>
+</html>

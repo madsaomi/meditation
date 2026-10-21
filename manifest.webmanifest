@@ -1,0 +1,12 @@
+{
+  "name": "Тихий ум — медитация и дыхание",
+  "short_name": "Тихий ум",
+  "description": "Дыхательные практики, медитативный таймер и тихие звуки",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#eceff3",
+  "theme_color": "#eceff3",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

@@ -1,0 +1,8 @@
+# Системный мусор
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Логи и локальные заметки
+*.log
+*.tmp
