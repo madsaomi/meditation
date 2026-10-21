@@ -1,8 +1,49 @@
-# Системный мусор
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments & Virtual Envs
+.env
+.env.local
+.env.*.local
+venv/
+env/
+ENV/
+.venv/
+
+# Node / Frontend
+node_modules/
+dist/
+build/
+.npm/
+
+# IDE & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Operating System Files
+.DS_Store
 Thumbs.db
 desktop.ini
-.DS_Store
 
-# Логи и локальные заметки
+# Logs & Temporary Files
 *.log
+context_dump.md
+agents/tools/context_dump.md
+scratch/
+.system_generated/
+
+# AI Agents & Tools
+.aider*
+.aider.conf.yml
+.aider.tags.cache.v3/
+.gemini/
+.continue/
+.zed/
+*.bak
+tmp/
+
 *.tmp
