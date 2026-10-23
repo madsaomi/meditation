@@ -1037,3 +1037,63 @@ body[data-time="night"] .hero::before, body[data-time="night"] .hero::after { op
   .hero-title { background: none; -webkit-text-fill-color: currentColor; }
   .breath-ring.r1::after { display: none; }
 }
+
+/* ============================================================ v38 · Красиво и лично */
+
+/* 🎨 Палитры акцента — шесть спокойных настроений поверх любого времени суток */
+body[data-palette="mint"]     { --pal: #5fae95; }
+body[data-palette="lavender"] { --pal: #8f86c9; }
+body[data-palette="sand"]     { --pal: #c2a06b; }
+body[data-palette="sky"]      { --pal: #5b95c4; }
+body[data-palette="quartz"]   { --pal: #c98ba3; }
+body[data-palette="graphite"] { --pal: #7a8794; }
+body[data-palette] {
+  --accent: var(--pal);
+  --accent-bright: color-mix(in srgb, var(--pal) 32%, #ffffff);
+  --accent2: var(--pal);
+}
+/* ночью акцент мягче и глубже — палитра не слепит в темноте */
+body[data-palette][data-time="night"] {
+  --accent: color-mix(in srgb, var(--pal) 68%, #141821);
+  --accent-bright: color-mix(in srgb, var(--pal) 35%, #dfe4ec);
+}
+
+/* 🪷 Лотос практики — лепесток за каждый цикл дыхания */
+.cycles { display: flex; align-items: center; justify-content: center; gap: 9px; }
+.lotus { width: 46px; height: 46px; flex: none; }
+.petal {
+  fill: color-mix(in srgb, var(--text) 6%, transparent);
+  stroke: color-mix(in srgb, var(--text) 28%, transparent);
+  stroke-width: 3;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: fill .7s ease, stroke .7s ease;
+}
+.petal.on {
+  fill: color-mix(in srgb, var(--accent) 34%, transparent);
+  stroke: var(--accent);
+  animation: petalPop .8s ease;
+}
+@keyframes petalPop {
+  0% { transform: scale(.5); }
+  55% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+.lotus-core {
+  fill: color-mix(in srgb, var(--accent) 18%, transparent);
+  stroke: color-mix(in srgb, var(--accent) 55%, transparent);
+  stroke-width: 3;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: fill .6s ease, stroke .6s ease;
+}
+.lotus.full .lotus-core {
+  fill: color-mix(in srgb, var(--accent) 46%, transparent);
+  stroke: var(--accent);
+  animation: corePulse 3.4s ease-in-out infinite;
+}
+@keyframes corePulse { 50% { transform: scale(1.2); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .petal.on, .lotus.full .lotus-core { animation: none; }
+}

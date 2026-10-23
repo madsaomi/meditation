@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Тихий ум — медитация и дыхание</title>
   <meta name="description" content="Спокойное приложение для медитации: дыхательные практики, таймер, тихие звуки и мудрые мысли. Всё содержимое приходит с внешних API."/>
-  <link rel="manifest" href="manifest.webmanifest?v=37"/>
+  <link rel="manifest" href="manifest.webmanifest?v=38"/>
   <meta name="theme-color" id="themeColor" content="#eceff3"/>
   <meta property="og:title" content="Тихий ум — медитация и дыхание"/>
   <meta property="og:description" content="Спокойные дыхательные практики, таймер, тихие звуки и мудрые мысли с внешних API."/>
@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@1,500;1,600&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="style.css?v=37"/>
+  <link rel="stylesheet" href="style.css?v=38"/>
 </head>
 <body>
 
@@ -62,7 +62,22 @@
         <button class="chip" id="breathFxChip" aria-pressed="false" title="Едва слышный вдох-выдох и лёгкий вибро-такт на смене фаз">🌬 Звук и вибро при смене фаз</button>
       </div>
       <button class="btn primary big" id="breathBtn">Начать дыхание</button>
-      <div class="cycles">Циклов: <b id="cycleCount">0</b></div>
+      <div class="cycles">
+        <svg class="lotus" id="lotus" viewBox="0 0 200 200" aria-hidden="true">
+          <g id="lotusPetals">
+            <g transform="rotate(0 100 100)"><ellipse class="petal" cx="100" cy="64" rx="17" ry="34"/></g>
+            <g transform="rotate(45 100 100)"><ellipse class="petal" cx="100" cy="64" rx="17" ry="34"/></g>
+            <g transform="rotate(90 100 100)"><ellipse class="petal" cx="100" cy="64" rx="17" ry="34"/></g>
+            <g transform="rotate(135 100 100)"><ellipse class="petal" cx="100" cy="64" rx="17" ry="34"/></g>
+            <g transform="rotate(180 100 100)"><ellipse class="petal" cx="100" cy="64" rx="17" ry="34"/></g>
+            <g transform="rotate(225 100 100)"><ellipse class="petal" cx="100" cy="64" rx="17" ry="34"/></g>
+            <g transform="rotate(270 100 100)"><ellipse class="petal" cx="100" cy="64" rx="17" ry="34"/></g>
+            <g transform="rotate(315 100 100)"><ellipse class="petal" cx="100" cy="64" rx="17" ry="34"/></g>
+          </g>
+          <circle class="lotus-core" cx="100" cy="100" r="13"/>
+        </svg>
+        <span>Циклов: <b id="cycleCount">0</b></span>
+      </div>
     </section>
 
     <!-- Мысль дня -->
@@ -129,7 +144,7 @@
 
     <!-- Звуки -->
     <section id="sounds" class="card reveal" style="--i:3">
-      <div class="card-head"><h2><span class="num">04</span>Звуки</h2><span class="tag">12 источников</span></div>
+      <div class="card-head"><h2><span class="num">04</span>Звуки</h2><span class="tag">13 источников</span></div>
       <p class="muted">Смешивайте источники как угодно: природа синтезируется прямо в браузере, музыка приходит через API. Или возьмите готовый микс:</p>
       <div class="mix-row">
         <span class="mix-label">Миксы:</span>
@@ -149,6 +164,7 @@
         <button class="sound" data-sound="chimes" title="Ветряные колокольчики с редкими перезвонами"><span class="sound-ico">🎐</span><span class="sound-name">Колокольчики</span><span class="sound-eq"><i></i><i></i><i></i></span></button>
         <button class="sound" data-sound="noise" title="Ровный белый шум — глушит отвлекающие звуки"><span class="sound-ico">💨</span><span class="sound-name">Белый шум</span><span class="sound-eq"><i></i><i></i><i></i></span></button>
         <button class="sound" data-sound="music" title="Случайный трек SoundHelix — без ключа API"><span class="sound-ico">🎵</span><span class="sound-name">Музыка</span><span class="sound-eq"><i></i><i></i><i></i></span></button>
+        <button class="sound" data-sound="drone" title="Глубокий медитативный тон с обертонами — ровная основа под любой фон"><span class="sound-ico">🕉</span><span class="sound-name">Тон</span><span class="sound-eq"><i></i><i></i><i></i></span></button>
       </div>
       <div class="track-now" id="trackNow" hidden>🎵 Сейчас играет: <b id="trackName">SoundHelix</b></div>
       <label class="vol">Громкость
@@ -157,6 +173,10 @@
       <div class="sleep-row">
         <span class="sleep-label">💤 Сон:</span>
         <div class="chips" id="sleepChips"></div>
+      </div>
+      <div class="sleep-row">
+        <span class="sleep-label">🕉 Тон:</span>
+        <div class="chips" id="droneChips"></div>
       </div>
       <div class="sleep-row">
         <span class="sleep-label">🎧 Пространство:</span>
@@ -193,6 +213,8 @@
     <div class="sp-group"><span class="sp-label">Тихий фон сеанса</span><div class="chips" id="spAmbient"></div></div>
     <div class="sp-group"><span class="sp-label">Дыхание и отклики</span><div class="chips" id="spFx"></div></div>
     <div class="sp-group"><span class="sp-label">🔔 Якорь — напоминание во время сеанса</span><div class="chips" id="spAnchor"></div></div>
+    <div class="sp-group"><span class="sp-label">🎨 Палитра акцента</span><div class="chips" id="paletteChips"></div></div>
+    <div class="sp-group"><span class="sp-label">🔔 Оттенок колокола</span><div class="chips" id="bellChips"></div></div>
     <div class="sp-group"><span class="sp-label">🌙 Спящий экран — затемнение для ночи</span>
       <input type="range" id="dimRange" class="dim-range" min="0" max="70" step="5" value="0" aria-label="Затемнение экрана"/>
     </div>
@@ -217,7 +239,7 @@
     </div>
   </div>
 
-  <script src="config.js?v=37"></script>
-  <script src="app.js?v=37"></script>
+  <script src="config.js?v=38"></script>
+  <script src="app.js?v=38"></script>
 </body>
 </html>

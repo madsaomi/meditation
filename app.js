@@ -374,6 +374,7 @@ async function startBreath() {
   const gen = ++breathGen;
   breathCycles = 0;
   $("#cycleCount").textContent = "0";
+  lotusRender(0);
   circle.classList.remove("idle");
   breathBtn.textContent = "Остановить";
   say(pick(PHRASES.breathStart));
@@ -394,6 +395,8 @@ async function startBreath() {
     }
     breathCycles++;
     $("#cycleCount").textContent = breathCycles;
+    lotusRender(breathCycles);
+    if (breathCycles === 8) toast("🪷 Цветок практики расцвёл — восемь циклов.");
     if (breathCycles % 4 === 0) {
       toast(`Мягко и ровно: ${breathCycles} циклов.`);
       say(pick(PHRASES.cycles));
@@ -718,6 +721,19 @@ spatialChip.addEventListener("click", () => {
 });
 spatialChipUI();
 
+/* ——— 🎵 Тон-дрон: глубокий медитативный тон с обертонами ——— */
+const DRONE_FREQS = [
+  { id: "111", name: "111 Гц", hz: 111 },
+  { id: "om", name: "🕉 Ом 136.1", hz: 136.1 },
+  { id: "174", name: "174 Гц", hz: 174 },
+  { id: "432", name: "432 Гц", hz: 432 },
+];
+let droneFreqIdx = 1;
+try {
+  const d = Number(localStorage.getItem("zenDroneFreq"));
+  if (Number.isInteger(d) && d >= 0 && d < DRONE_FREQS.length) droneFreqIdx = d;
+} catch { /* ignore */ }
+
 const BUILDERS = {
   rain() {
     const src = AC.createBufferSource();
@@ -915,6 +931,30 @@ const SCHEDULERS = {
     ding();
     return () => { alive = false; };
   },
+  drone() {
+    const hz = DRONE_FREQS[droneFreqIdx].hz;
+    const g = AC.createGain(); g.gain.value = 0;
+    // покачивание живёт в отдельной ступени — выключенный тон молчит полностью
+    const vib = AC.createGain(); vib.gain.value = 1;
+    const oscs = [];
+    [[1, 0.55], [2.004, 0.17], [1.5, 0.09]].forEach(([m, lv]) => {
+      const o = AC.createOscillator(); o.type = "sine";
+      o.frequency.value = hz * m;
+      const og = AC.createGain(); og.gain.value = lv;
+      o.connect(og); og.connect(vib);
+      o.start(); oscs.push(o);
+    });
+    // совсем медленное покачивание — тон дышит и не замерзает
+    const lfo = AC.createOscillator(); lfo.frequency.value = 0.06;
+    const lfoG = AC.createGain(); lfoG.gain.value = 0.14;
+    lfo.connect(lfoG); lfoG.connect(vib.gain);
+    lfo.start(); oscs.push(lfo);
+    vib.connect(g); g.connect(soundPan("drone"));
+    return {
+      g, level: 0.4,
+      dispose: () => oscs.forEach((o) => { try { o.stop(); } catch { /* уже остановлен */ } }),
+    };
+  },
 };
 
 // Название текущего трека под сеткой звуков
@@ -1008,7 +1048,7 @@ try {
 
 /* ------------------------- Миксы звуков (пресеты) ------------------------- */
 
-const ALL_NATURE = ["rain", "stream", "ocean", "wind", "thunder", "noise", "bowl", "birds", "fire", "crickets", "chimes"];
+const ALL_NATURE = ["rain", "stream", "ocean", "wind", "thunder", "noise", "bowl", "birds", "fire", "crickets", "chimes", "drone"];
 
 const MIXES = [
   { id: "storm", name: "🌧 Дождь с грозой", sounds: ["rain", "thunder"], vol: 65 },
@@ -1173,34 +1213,43 @@ document.addEventListener("keydown", (e) => {
   tile.click(); // делегат сам разберёт: музыка, планировщики, строители
 });
 
-// Мягкий колокольчик в конце сессии
-function bell() {
+// Мягкий колокольчик в конце сессии — оттенок общий для финала и якоря
+const BELL_TONES = [
+  { id: "temple", name: "🏔 Храм", f: 174.6, partials: [1, 2.7, 5.4], decay: 5.5 },
+  { id: "clear", name: "🍃 Светлый", f: 523.25, partials: [1, 2, 3.01], decay: 3.2 },
+  { id: "quiet", name: "🌙 Тишина", f: 396, partials: [1, 2.02], decay: 4.5 },
+  { id: "crystal", name: "✨ Кристалл", f: 864.7, partials: [1, 1.008, 2.76], decay: 4 },
+];
+let bellToneIdx = 0;
+try {
+  const bt = localStorage.getItem("zenBellTone");
+  const i = BELL_TONES.findIndex((t) => t.id === bt);
+  if (i >= 0) bellToneIdx = i;
+} catch { /* ignore */ }
+
+// Одна купель, разная амплитуда: так финал и якорь звучат в одном строе
+function playBell(peak, scale = 1, div = 1) {
   ensureAudio();
+  const tone = BELL_TONES[bellToneIdx];
+  const dur = tone.decay * scale;
   const now = AC.currentTime;
-  [523.25, 659.25, 783.99].forEach((f, i) => {
-    const o = AC.createOscillator(); o.type = "sine"; o.frequency.value = f;
+  tone.partials.forEach((m, i) => {
+    const o = AC.createOscillator(); o.type = "sine";
+    o.frequency.value = tone.f * m;
     const g = AC.createGain();
     g.gain.setValueAtTime(0.0001, now);
-    g.gain.exponentialRampToValueAtTime(0.3 / (i + 1), now + 0.03);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + 3.5);
+    g.gain.exponentialRampToValueAtTime(peak / (i + div), now + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
     o.connect(g); g.connect(master);
-    o.start(now); o.stop(now + 4);
+    o.start(now); o.stop(now + dur + 0.6);
   });
 }
 
+function bell() { playBell(0.3); }
+
 // 🔔 Якорь: тише финального колокола, одиночный мягкий удар
 function anchorBell() {
-  ensureAudio();
-  const now = AC.currentTime;
-  [432, 864.7].forEach((f, i) => {
-    const o = AC.createOscillator(); o.type = "sine"; o.frequency.value = f;
-    const g = AC.createGain();
-    g.gain.setValueAtTime(0.0001, now);
-    g.gain.exponentialRampToValueAtTime(0.12 / (i + 1.2), now + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + 5);
-    o.connect(g); g.connect(master);
-    o.start(now); o.stop(now + 5.5);
-  });
+  playBell(0.12, 1.15, 1.2);
   const rv = document.getElementById("ringVal");
   if (rv) {
     rv.classList.add("bell-pulse");
@@ -1943,6 +1992,95 @@ function setNightMode(on) {
 nightMode.addEventListener("click", () => setNightMode(false)); // тап в любом месте — выход
 $("#nmBtn")?.addEventListener("click", () => setNightMode(true));
 
+/* ------------------------- 🎨 Палитры акцента · 🔔 оттенки колокола · 🕉 тон ------------------------- */
+
+// 🎨 Палитра акцента: «Авто» подставляет цвет времени суток, остальные — своё настроение
+const PALETTES = [
+  { id: "", name: "✨ Авто" },
+  { id: "mint", name: "🌿 Мята" },
+  { id: "lavender", name: "💜 Лаванда" },
+  { id: "sand", name: "🏖 Песок" },
+  { id: "sky", name: "🌌 Небо" },
+  { id: "quartz", name: "💗 Кварц" },
+  { id: "graphite", name: "⬛ Графит" },
+];
+const paletteChipsBox = $("#paletteChips");
+
+function setPalette(id) {
+  if (id) document.body.dataset.palette = id;
+  else delete document.body.dataset.palette;
+  try {
+    if (id) localStorage.setItem("zenPalette", id);
+    else localStorage.removeItem("zenPalette");
+  } catch { /* ignore */ }
+  [...paletteChipsBox.children].forEach((c) => c.classList.toggle("active", (c.dataset.pid || "") === id));
+}
+PALETTES.forEach((p) => {
+  const b = document.createElement("button");
+  b.className = "chip";
+  b.dataset.pid = p.id;
+  b.textContent = p.name;
+  b.addEventListener("click", () => {
+    setPalette(p.id);
+    toast(p.id ? `Палитра: ${p.name}` : "Палитра — авто, как время суток.");
+  });
+  paletteChipsBox.appendChild(b);
+});
+try {
+  const savedPal = localStorage.getItem("zenPalette");
+  setPalette(PALETTES.some((p) => p.id === savedPal) ? savedPal : "");
+} catch { setPalette(""); }
+
+// 🪷 Лотос практики: лепесток за каждый завершённый цикл дыхания
+const lotusPetals = document.querySelectorAll("#lotusPetals .petal");
+const lotusEl = document.getElementById("lotus");
+function lotusRender(n) {
+  const full = Math.min(n, 8);
+  lotusPetals.forEach((p, i) => p.classList.toggle("on", i < full));
+  lotusEl?.classList.toggle("full", n >= 8);
+}
+
+// 🔔 Оттенок колокола — общая купель для финала сеанса и якоря
+function setBellTone(i, quiet) {
+  bellToneIdx = i;
+  try { localStorage.setItem("zenBellTone", BELL_TONES[i].id); } catch { /* ignore */ }
+  [...bellChipsBox.children].forEach((c, j) => c.classList.toggle("active", j === i));
+  if (!quiet) toast(`Оттенок колокола: ${BELL_TONES[i].name}`);
+}
+const bellChipsBox = $("#bellChips");
+BELL_TONES.forEach((t, i) => {
+  const b = document.createElement("button");
+  b.className = "chip" + (i === bellToneIdx ? " active" : "");
+  b.textContent = t.name;
+  b.addEventListener("click", () => setBellTone(i));
+  bellChipsBox.appendChild(b);
+});
+
+// 🕉 Частота тона-дрона: при смене — мягкий кроссфейд на новом тоне
+const droneChipsBox = $("#droneChips");
+function setDroneFreq(i) {
+  const st = sounds.drone;
+  const wasOn = !!st?.on;
+  droneFreqIdx = i;
+  try { localStorage.setItem("zenDroneFreq", String(i)); } catch { /* ignore */ }
+  [...droneChipsBox.children].forEach((c, j) => c.classList.toggle("active", j === i));
+  if (st?.ref) {
+    if (wasOn) setSoundState("drone", false); // старый тон уходит плавно
+    const old = st.ref;
+    st.ref = null; // следующее включение построит частоту заново
+    setTimeout(() => { try { old.dispose?.(); } catch { /* ignore */ } }, 1600);
+    if (wasOn) { setSoundState("drone", true); syncSoundPressed(); }
+  }
+  toast(`Тон: ${DRONE_FREQS[i].name}`);
+}
+DRONE_FREQS.forEach((d, i) => {
+  const b = document.createElement("button");
+  b.className = "chip" + (i === droneFreqIdx ? " active" : "");
+  b.textContent = d.name;
+  b.addEventListener("click", () => setDroneFreq(i));
+  droneChipsBox.appendChild(b);
+});
+
 /* ------------------------- Панель настроек (⚙) ------------------------- */
 
 const settingsBtn = $("#settingsBtn");
@@ -2072,7 +2210,7 @@ function palMakeNumeric(name) {
 const SOUND_RU = {
   rain: "Дождь", stream: "Ручей", ocean: "Океан", wind: "Ветер", fire: "Костёр",
   thunder: "Гроза", crickets: "Сверчки", birds: "Птицы", bowl: "Колокол",
-  chimes: "Колокольчики", noise: "Белый шум", music: "Музыка",
+  chimes: "Колокольчики", noise: "Белый шум", music: "Музыка", drone: "Тон-дрон",
 };
 
 // Команды собираются в момент открытия — состояние всегда актуальное
@@ -2119,6 +2257,12 @@ function buildCommands() {
   add("Режим: Ночник", () => setNightMode(true));
   add("Дыхание: старт/стоп", () => breathBtn.click());
   add("Стерео: вкл/выкл", () => spatialChip.click());
+  PALETTES.filter((p) => p.id).forEach((p) =>
+    add(`Палитра: ${p.name}`, () => { setPalette(p.id); toast(`Палитра: ${p.name}`); })
+  );
+  add("Палитра: авто", () => { setPalette(""); toast("Палитра — авто, как время суток."); });
+  BELL_TONES.forEach((t, i) => add(`Колокол: ${t.name}`, () => setBellTone(i)));
+  DRONE_FREQS.forEach((d, i) => add(`Тон: ${d.name}`, () => setDroneFreq(i)));
   [["Дыхание", "#breath"], ["Техники", "#techniques"], ["Таймер", "#timer"], ["Звуки", "#sounds"]]
     .forEach(([n, h]) => add(`Перейти: ${n}`, () => { location.hash = h; }));
   return cmds;
