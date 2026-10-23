@@ -1097,3 +1097,18 @@ body[data-palette][data-time="night"] {
 @media (prefers-reduced-motion: reduce) {
   .petal.on, .lotus.full .lotus-core { animation: none; }
 }
+
+/* ── Доступность (focus-visible) ───────────────────────────────── */
+.chip:focus-visible,
+.sound:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── Мобильная адаптация (390 px) ────────────────────────────── */
+@media (max-width: 390px) {
+  .hero { padding: 10px; }
+  .chip { min-width: 44px; font-size: 13px; }
+  .sound-name { font-size: 12px; }
+  .cycle { font-size: 12px; }
+}
