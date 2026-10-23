@@ -1120,6 +1120,25 @@ body[data-palette][data-time="night"] {
   .brand { animation: none; }
 }
 
+/* ── Микро‑анимации v40 ───────────────────────────────────────── */
+.chip:hover { transform: translateY(-2px) scale(1.04); transition: transform .15s ease, box-shadow .15s ease; }
+.chip:active { transform: translateY(1px) scale(.98); }
+.sound:hover { transform: scale(1.02); transition: transform .12s ease; }
+
+/* ── Loading spinner ───────────────────────────────────────────── */
+.loading-spinner {
+  width: 20px; height: 20px; border: 3px solid var(--accent);
+  border-color: var(--accent) transparent transparent transparent;
+  border-radius: 50%; animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Hover состояния лепестков лотоса ───────────────────────────── */
+.lotus .petal:hover { fill: color-mix(in srgb, var(--accent) 30%, transparent); stroke: var(--accent); }
+
+/* ── Улучшенные переходы при смене палитры ───────────────────────── */
+body { transition: --accent .4s ease, --accent-bright .4s ease, --accent2 .4s ease; }
+
 /* ── Мобильная адаптация (390 px) ────────────────────────────── */
 @media (max-width: 390px) {
   .hero { padding: 10px; }
