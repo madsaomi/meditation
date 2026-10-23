@@ -1105,6 +1105,21 @@ body[data-palette][data-time="night"] {
   outline-offset: 2px;
 }
 
+/* ── Микро‑анимации ───────────────────────────────────────────── */
+.chip:hover { transform: translateY(-2px) scale(1.04); transition: transform .15s ease, box-shadow .15s ease; }
+.chip:active { transform: translateY(1px) scale(0.98); }
+.sound:hover { transform: scale(1.02); transition: transform .12s ease; }
+
+/* Pulse‑анимация бренда (при idle)—отключается Reduced‑Motion */
+@keyframes brandPulse {
+  0%, 100% { opacity: .5; }
+  50% { opacity: 1; }
+}
+.brand { animation: brandPulse 5s ease-in-out infinite; }
+@media (prefers-reduce-motion: reduce) {
+  .brand { animation: none; }
+}
+
 /* ── Мобильная адаптация (390 px) ────────────────────────────── */
 @media (max-width: 390px) {
   .hero { padding: 10px; }
