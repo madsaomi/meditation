@@ -173,9 +173,47 @@ const FALLBACK_QUOTES = [
   { text: "Не всегда нужно спешить. Медленный шаг тоже приводит к цели.", author: "Моцарт" },
 ];
 
+const TOPIC_QUOTES = {
+  stoic: [
+    { text: "Нас тревожат не вещи вокруг, а наше мнение о них.", author: "Эпиктет", label: "Стоицизм · Внутренняя опора" },
+    { text: "Спокойствие — не что иное, как надлежащий порядок в мыслях.", author: "Марк Аврелий", label: "Стоицизм · Размышления" },
+    { text: "Мы страдаем чаще в воображении, чем в реальности.", author: "Сенека", label: "Стоицизм · Нравственные письма" },
+    { text: "У вас есть власть над своим разумом, а не над внешними событиями. Осознайте это — и обретёте силу.", author: "Марк Аврелий", label: "Стоицизм · Крепость духа" },
+    { text: "Тот, кто боится будущего, теряет настоящее.", author: "Сенека", label: "Стоицизм · О скоротечности жизни" },
+    { text: "Счастье твоей жизни зависит от качества твоих мыслей.", author: "Марк Аврелий", label: "Стоицизм · Осознанность" },
+    { text: "Не требуй, чтобы события происходили так, как ты хочешь; желай, чтобы они происходили так, как происходят.", author: "Эпиктет", label: "Стоицизм · Принятие" },
+  ],
+  zen: [
+    { text: "Путь в тысячу ли начинается с одного спокойного шага.", author: "Лао-цзы", label: "Дао дэ цзин" },
+    { text: "Сидя тихо, ничего не делая, весна приходит, и трава растёт сама собой.", author: "Дзенский коан", label: "Дзен · Естественность" },
+    { text: "Вода преодолевает препятствия не силой, а мягкостью и текучестью.", author: "Лао-цзы", label: "Дао · Путь воды" },
+    { text: "Когда ум чист, весь мир вокруг становится ясным зеркалом.", author: "Бодхидхарма", label: "Дзен · Чистый ум" },
+    { text: "В уме новичка содержится множество возможностей, в уме эксперта — лишь несколько.", author: "Сюнрю Судзуки", label: "Дзен · Сознание новичка" },
+    { text: "Не ищите истину вовне, просто перестаньте цепляться за суждения.", author: "Сен-цан", label: "Дзен · Доверие сердцу" },
+    { text: "Если чашка полна, в неё невозможно ничего налить. Опустошите свой ум.", author: "Притча о мастере", label: "Дзен · Пустота" },
+  ],
+  mind: [
+    { text: "Дыхание — это якорь, возвращающий нас в настоящий момент.", author: "Тит Нат Хан", label: "Осознанность · Мир в каждом шаге" },
+    { text: "Прошлое уже ушло, будущее ещё не наступило. Есть только здесь и сейчас.", author: "Будда Гаутама", label: "Осознанность · Настоящее" },
+    { text: "Осознанность — это способность заметить происходящее прямо сейчас без критики.", author: "Джон Кабат-Зинн", label: "MBSR · Практика" },
+    { text: "Настоящая медитация начинается тогда, когда вы встаете с коврика в повседневную жизнь.", author: "Джидду Кришнамурти", label: "Осознанность · Жизнь" },
+    { text: "Примите то, что есть, и только тогда начнётся подлинная трансформация.", author: "Экхарт Толле", label: "Сила настоящего" },
+    { text: "Улыбнитесь своему дыханию. Это величайший подарок жизни.", author: "Тит Нат Хан", label: "Осознанность · Радость" },
+  ],
+};
+
+let currentTopic = "all";
+
 function saveThought(data) {
   try { localStorage.setItem("zenThought", JSON.stringify(data)); } catch { /* приватный режим */ }
 }
+
+const TOD_MOOD_TAG = {
+  morning: "🌅 Утреннее намерение",
+  day:     "☀️ Дневная пауза",
+  evening: "🌙 Вечернее замедление",
+  night:   "✨ Ночная тишина",
+};
 
 function renderQuote(text, author, label, warn) {
   $("#quoteText").classList.remove("skel");
@@ -184,13 +222,24 @@ function renderQuote(text, author, label, warn) {
   const tag = $("#quoteSource");
   tag.textContent = label;
   tag.classList.toggle("warn", !!warn);
+  const moodTag = $("#quoteMood");
+  if (moodTag) moodTag.textContent = TOD_MOOD_TAG[timeOfDayName()] || "✨ Мудрость";
 }
 
-async function loadQuote() {
+async function loadQuote(topic = currentTopic) {
+  currentTopic = topic;
   const tag = $("#quoteSource");
   tag.textContent = "загружаем…";
   tag.classList.remove("warn");
   $("#quoteText").classList.add("skel");
+
+  if (topic !== "all" && TOPIC_QUOTES[topic]) {
+    const list = TOPIC_QUOTES[topic];
+    const item = list[Math.floor(Math.random() * list.length)];
+    renderQuote(item.text, item.author, item.label);
+    return;
+  }
+
   for (const src of QUOTE_SOURCES) {
     try {
       const q = await src.get();
@@ -202,6 +251,16 @@ async function loadQuote() {
   const q = FALLBACK_QUOTES[Math.floor(Math.random() * FALLBACK_QUOTES.length)];
   renderQuote(q.text, q.author, "офлайн-подборка", true);
 }
+
+// Переключение рубрик мудрости
+document.querySelectorAll(".qt-chip").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".qt-chip").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    const topic = btn.dataset.topic || "all";
+    loadQuote(topic);
+  });
+});
 
 // «Мысль дня»: один раз за день берём с API и кешируем локально
 function initThought() {
@@ -226,6 +285,8 @@ const PATTERNS = [
     phases: [ { t: "Вдох", d: 5, s: 1 }, { t: "Выдох", d: 5, s: 0.55 } ] },
   { name: "4 · 6", sub: "антистресс: выдох чуть длиннее вдоха",
     phases: [ { t: "Вдох", d: 4, s: 1 }, { t: "Выдох", d: 6, s: 0.55 } ] },
+  { name: "Вздох 3·1·6", sub: "физиологический вздох: двойной вдох для быстрого снятия стресса",
+    phases: [ { t: "Вдох", d: 3, s: 0.88 }, { t: "Довдох", d: 1.5, s: 1.0 }, { t: "Выдох", d: 6, s: 0.55 } ] },
   { name: "7 · 8", sub: "для засыпания: очень медленный ритм",
     phases: [ { t: "Вдох", d: 7, s: 1 }, { t: "Выдох", d: 8, s: 0.55 } ] },
 ];
@@ -236,6 +297,7 @@ let breathCycles = 0;
 let currentPattern = 0;
 
 const circle = $("#breathCircle");
+const petals = $("#breathPetals");
 const label = $("#breathLabel");
 const breathBtn = $("#breathBtn");
 
@@ -296,7 +358,12 @@ function shapeWhoosh(ph) {
   const cur = Math.max(0.0001, w.g.gain.value);
   w.g.gain.cancelScheduledValues(now);
   w.f.frequency.cancelScheduledValues(now);
-  if (ph.t.includes("Вдох")) {
+  if (ph.t === "Довдох") {
+    w.g.gain.setValueAtTime(cur, now);
+    w.g.gain.linearRampToValueAtTime(0.075, now + ph.d);
+    w.f.frequency.setValueAtTime(450, now);
+    w.f.frequency.linearRampToValueAtTime(820, now + ph.d);
+  } else if (ph.t.includes("Вдох")) {
     w.g.gain.setValueAtTime(cur, now);
     w.g.gain.linearRampToValueAtTime(0.06, now + ph.d);
     w.f.frequency.setValueAtTime(300, now);
@@ -336,7 +403,11 @@ function breathPhase(ph, gen) {
     if (ph.s !== null) {
       circle.style.transitionDuration = ph.d + "s";
       circle.style.transform = `scale(${ph.s})`;
-      arcTo(ph.s >= 1 ? 0 : 100, ph.d);
+      if (petals) {
+        petals.style.transitionDuration = ph.d + "s";
+        petals.style.transform = `scale(${ph.s})`;
+      }
+      arcTo(ph.t.includes("Вдох") ? 0 : 100, ph.d);
     } else {
       document.getElementById("phaseArc")?.classList.add("hold");
     }
@@ -363,6 +434,7 @@ function stopBreath() {
   void circle.offsetWidth;
   circle.classList.add("idle");
   circle.style.transform = "";
+  if (petals) petals.style.transform = "";
   arcTo(100, 0.6);
   setBreathTitle("");
   label.textContent = "Готовы?";
@@ -384,6 +456,10 @@ async function startBreath() {
   setBreathTitle("Приготовьтесь");
   circle.style.transitionDuration = "1.2s";
   circle.style.transform = "scale(0.4)";
+  if (petals) {
+    petals.style.transitionDuration = "1.2s";
+    petals.style.transform = "scale(0.4)";
+  }
   arcTo(100, 1.2);
   await sleep(1300);
   if (!alive(gen)) return stopBreath();
@@ -437,6 +513,48 @@ function updatePatternHint() {
   $("#patternHint").textContent = `${PATTERNS[currentPattern].name} — ${PATTERNS[currentPattern].sub}`;
 }
 
+/* ── Чек-ин самочувствия и умный подбор практики ── */
+const MOOD_RECS = {
+  stress: {
+    rec: "💡 Рекомендация: Дыхание «Вздох 3·1·6» + «Снятие зажимов»",
+    pattern: 4,
+    toast: "Подобран ритм «Вздох 3·1·6» для быстрого снятия стресса ✨",
+  },
+  tired: {
+    rec: "💡 Рекомендация: Мягкий ритм 5·5 + микс «Уютный чердак»",
+    pattern: 2,
+    toast: "Включен мягкий ритм 5·5 для восстановления сил 🌿",
+  },
+  calm: {
+    rec: "💡 Рекомендация: Глубокое дыхание 4·7·8 + микс «Обитель покоя»",
+    pattern: 0,
+    toast: "Активирован глубокий расслабляющий ритм 4·7·8 🌙",
+  },
+  focus: {
+    rec: "💡 Рекомендация: Дыхание «Квадрат 4·4·4·4» для концентрации",
+    pattern: 1,
+    toast: "Выбран «Квадрат 4·4·4·4» для собранности и ясности ⚡",
+  },
+};
+
+document.querySelectorAll(".mc-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".mc-btn").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    const m = btn.dataset.mood;
+    const info = MOOD_RECS[m];
+    if (info) {
+      const recEl = $("#mcRec");
+      if (recEl) {
+        recEl.hidden = false;
+        recEl.textContent = info.rec;
+      }
+      setPattern(info.pattern);
+      toast(info.toast);
+    }
+  });
+});
+
 /* ------------------------- Таймер медитации ------------------------- */
 
 const RING_C = 2 * Math.PI * 88;
@@ -456,6 +574,19 @@ function renderTimer() {
   timerText.textContent = fmt(tLeft);
   ringVal.style.strokeDashoffset = RING_C * (1 - (tTotal - tLeft) / tTotal);
   document.title = tRunning ? `${fmt(tLeft)} · Тихий ум` : "Тихий ум — медитация и дыхание";
+  const endEl = $("#timerEndTime");
+  if (endEl) {
+    if (tRunning && tEnd > 0) {
+      const d = new Date(tEnd);
+      const hh = String(d.getHours()).padStart(2, "0");
+      const mm = String(d.getMinutes()).padStart(2, "0");
+      endEl.textContent = `Завершится в ${hh}:${mm}`;
+      endEl.classList.add("active");
+    } else {
+      endEl.textContent = `Сеанс: ${Math.round(tTotal / 60)} мин`;
+      endEl.classList.remove("active");
+    }
+  }
 }
 
 function timerTick() {
@@ -678,6 +809,7 @@ function filter(type, freq, q) {
 const SOUND_PAN = {
   rain: -0.3, stream: 0.42, ocean: 0, wind: -0.45, thunder: -0.12,
   noise: 0, bowl: 0.12, birds: -0.55, fire: 0.3, crickets: 0.5, chimes: 0.6,
+  purr: 0, roof: -0.25, train: 0.3,
 };
 let spatialOn = true;
 try { spatialOn = localStorage.getItem("zenSpatial") !== "0"; } catch { /* ignore */ }
@@ -804,6 +936,47 @@ const BUILDERS = {
     src.connect(lp); lp.connect(g); g.connect(soundPan("noise"));
     src.start();
     return { g, level: 0.22 };
+  },
+  purr() {
+    const src = AC.createBufferSource();
+    src.buffer = noiseBuffer("brown"); src.loop = true;
+    const lp = filter("lowpass", 160);
+    const bp = filter("bandpass", 80, 2);
+    const g = AC.createGain(); g.gain.value = 0;
+    const lfo = AC.createOscillator(); lfo.frequency.value = 26;
+    const lfoG = AC.createGain(); lfoG.gain.value = 0.45;
+    lfo.connect(lfoG); lfoG.connect(g.gain);
+    const sub = AC.createOscillator(); sub.type = "sine"; sub.frequency.value = 52;
+    const subG = AC.createGain(); subG.gain.value = 0.08;
+    sub.connect(subG); subG.connect(g);
+    src.connect(lp); lp.connect(bp); bp.connect(g); g.connect(soundPan("purr"));
+    src.start(); lfo.start(); sub.start();
+    return { g, level: 0.55, base: 0.4 };
+  },
+  roof() {
+    const src = AC.createBufferSource();
+    src.buffer = noiseBuffer("white"); src.loop = true;
+    const lp = filter("lowpass", 420);
+    const bp = filter("bandpass", 320, 1.2);
+    const g = AC.createGain(); g.gain.value = 0;
+    const lfo = AC.createOscillator(); lfo.frequency.value = 0.2;
+    const lfoG = AC.createGain(); lfoG.gain.value = 0.15;
+    lfo.connect(lfoG); lfoG.connect(g.gain);
+    src.connect(lp); lp.connect(bp); bp.connect(g); g.connect(soundPan("roof"));
+    src.start(); lfo.start();
+    return { g, level: 0.48, base: 0.38 };
+  },
+  train() {
+    const src = AC.createBufferSource();
+    src.buffer = noiseBuffer("brown"); src.loop = true;
+    const lp = filter("lowpass", 240);
+    const g = AC.createGain(); g.gain.value = 0;
+    const lfo = AC.createOscillator(); lfo.frequency.value = 0.75;
+    const lfoG = AC.createGain(); lfoG.gain.value = 0.35;
+    lfo.connect(lfoG); lfoG.connect(g.gain);
+    src.connect(lp); lp.connect(g); g.connect(soundPan("train"));
+    src.start(); lfo.start();
+    return { g, level: 0.42, base: 0.3 };
   },
 };
 
@@ -1048,23 +1221,27 @@ try {
 
 /* ------------------------- Миксы звуков (пресеты) ------------------------- */
 
-const ALL_NATURE = ["rain", "stream", "ocean", "wind", "thunder", "noise", "bowl", "birds", "fire", "crickets", "chimes", "drone"];
+const ALL_NATURE = ["rain", "stream", "ocean", "wind", "thunder", "noise", "bowl", "birds", "fire", "crickets", "chimes", "drone", "purr", "roof", "train"];
 
 const MIXES = [
   { id: "storm", name: "🌧 Дождь с грозой", sounds: ["rain", "thunder"], vol: 65 },
   { id: "fire", name: "🔥 У камина", sounds: ["fire", "crickets"], vol: 60 },
+  { id: "attic", name: "🛖 Уютный чердак", sounds: ["purr", "roof", "fire"], vol: 54 },
+  { id: "train_night", name: "🚂 Ночная дорога", sounds: ["train", "roof", "wind"], vol: 50 },
   { id: "ocean", name: "🌊 Океан и ветер", sounds: ["ocean", "wind"], vol: 55 },
   { id: "creek", name: "🌲 Ручей и птицы", sounds: ["stream", "birds"], vol: 50 },
-  { id: "sleep", name: "💤 Сон", sounds: ["ocean", "noise"], vol: 30 },
+  { id: "forest", name: "🍃 Шелест леса", sounds: ["wind", "birds"], vol: 52 },
+  { id: "sanctuary", name: "🕉 Обитель покоя", sounds: ["drone", "chimes", "bowl"], vol: 48 },
+  { id: "sleep", name: "💤 Сон", sounds: ["ocean", "noise", "purr"], vol: 30 },
   { id: "quiet", name: "⏹ Тишина", sounds: [], vol: null },
 ];
 
 // Подбор микса по времени суток: ночью — мягче, утром — бодрее
 const MIX_POOLS = {
-  morning: ["creek", "fire", "ocean", "storm"],
-  day: ["storm", "fire", "ocean", "creek", "sleep"],
-  evening: ["fire", "storm", "ocean", "sleep"],
-  night: ["sleep", "ocean", "storm"],
+  morning: ["forest", "creek", "fire", "ocean", "storm"],
+  day: ["forest", "storm", "fire", "ocean", "creek", "sanctuary", "attic"],
+  evening: ["sanctuary", "attic", "train_night", "fire", "forest", "ocean", "sleep"],
+  night: ["sanctuary", "sleep", "attic", "train_night", "ocean"],
 };
 
 const mixChipsBox = $("#mixChips");
@@ -1376,7 +1553,7 @@ const TIME_GREETINGS = {
   night:   "Доброй ночи 🌙",
   morning: "Доброе утро ☀️",
   day:     "Добрый день 🌤",
-  evening: "Добрый вечер 🌆",
+  evening: "Добрый вечер ✨",
 };
 
 function timeOfDayName() {
@@ -1398,7 +1575,7 @@ function initDayTheme() {
   const oled = forced === "2";
   document.body.dataset.time = tod;
   document.body.dataset.oled = oled ? "1" : "0";
-  $("#greetTitle").textContent = TIME_GREETINGS[tod] + " 👋";
+  $("#greetTitle").textContent = TIME_GREETINGS[tod];
   const d = new Date();
   $("#timeTag").textContent = `${d.getDate()} ${MONTHS_RU[d.getMonth()]} · ${oled ? "глубокая ночь" : TOD_RU[tod]}`;
   const tc = document.getElementById("themeColor");
@@ -1516,6 +1693,69 @@ const TECHNIQUES = [
       { d: 45, t: "Согласуйте шаги с дыханием: шаг — вдох, шаг — выдох" },
       { d: 40, t: "Замечайте звуки вокруг — просто замечайте, не называя" },
       { d: 30, t: "Остановитесь. Три спокойных вдоха — и продолжайте день" },
+    ],
+  },
+  {
+    title: "Снятие зажимов", emoji: "💆", dur: "2 мин",
+    steps: [
+      { d: 25, t: "Мягко опустите плечи вниз и отведите их назад" },
+      { d: 25, t: "Разомкните зубы, расслабьте челюсть и язык" },
+      { d: 25, t: "Разгладьте лоб и точку между бровями" },
+      { d: 25, t: "Глубокий спокойный вдох… и мягкий выдох ртом" },
+      { d: 20, t: "Почувствуйте лёгкость во всём лице, шее и плечах" },
+    ],
+  },
+  {
+    title: "Перезагрузка глаз", emoji: "👁", dur: "1 мин",
+    steps: [
+      { d: 15, t: "Оторвите взгляд от экрана и посмотрите далеко в окно" },
+      { d: 15, t: "Мягко поморгайте несколько раз, снимая сухость" },
+      { d: 20, t: "Согрейте ладони трением и прикройте ими глаза (пальминг)" },
+      { d: 10, t: "Спокойный вдох в темноту ладоней… и откройте глаза" },
+    ],
+  },
+  {
+    title: "Любящая доброта (Метта)", emoji: "💛", dur: "2 мин",
+    steps: [
+      { d: 25, t: "Положите руку на грудь: пусть я буду в безопасности и мире" },
+      { d: 30, t: "Вспомните дорогого человека: пусть ты будешь счастлив" },
+      { d: 30, t: "Вспомните любого незнакомца: пусть и у тебя всё будет хорошо" },
+      { d: 25, t: "Расширьте это тепло на весь мир вокруг вас. Покой в сердце" },
+    ],
+  },
+  {
+    title: "Квадрат Box 4·4", emoji: "📦", dur: "1.5 мин",
+    steps: [
+      { d: 4, t: "Вдох носом — 4 секунды" },
+      { d: 4, t: "Задержка дыхания — 4 секунды" },
+      { d: 4, t: "Плавный выдох — 4 секунды" },
+      { d: 4, t: "Пауза в пустоте — 4 секунды. Пульс ровный" },
+    ],
+  },
+  {
+    title: "Шея и челюсть", emoji: "💆‍♂️", dur: "1 мин",
+    steps: [
+      { d: 15, t: "Мягко наклоните голову к правому плечу, потяните шею" },
+      { d: 15, t: "Плавный перекат к левому плечу, отпуская затылок" },
+      { d: 15, t: "Широко зевните и разомкните зубы, расслабляя челюсть" },
+      { d: 15, t: "Опустите плечи и сделайте свободный выдох" },
+    ],
+  },
+  {
+    title: "Такт 3·1·6 Релакс", emoji: "🌊", dur: "1 мин",
+    steps: [
+      { d: 3, t: "Быстрый вдох носом — 3 секунды" },
+      { d: 1, t: "Короткая пауза — 1 секунда" },
+      { d: 6, t: "Длинный выдох через губы — 6 секунд" },
+      { d: 15, t: "Почувствуйте, как сердце замедляет свой ритм" },
+    ],
+  },
+  {
+    title: "Чек-ин: Где я?", emoji: "🌿", dur: "1 мин",
+    steps: [
+      { d: 20, t: "Где сейчас ваши мысли? Просто заметьте их, не оценивая" },
+      { d: 20, t: "Ощутите подошвы стоп и устойчивую опору под вами" },
+      { d: 20, t: "Сделайте вдох в живот. Вы прямо здесь, в этой секунде" },
     ],
   },
 ];
@@ -1908,20 +2148,64 @@ function revealCheck() {
   });
 }
 
+/* ------------------------- Студийная сцена: переключение дыхание / таймер / Сад Дзен ------------------------- */
+function switchStage(stage) {
+  const isBreath = stage === "breath";
+  const isTimer = stage === "timer";
+  const isGarden = stage === "garden";
+
+  $("#tabBreath")?.classList.toggle("active", isBreath);
+  $("#tabTimer")?.classList.toggle("active", isTimer);
+  $("#tabGarden")?.classList.toggle("active", isGarden);
+
+  const breathSec = $("#breath");
+  const timerSec = $("#timer");
+  const gardenSec = $("#zenGarden");
+
+  if (breathSec) breathSec.hidden = !isBreath;
+  if (timerSec) timerSec.hidden = !isTimer;
+  if (gardenSec) {
+    gardenSec.hidden = !isGarden;
+    if (isGarden) initZenGarden();
+  }
+}
+$("#tabBreath")?.addEventListener("click", () => switchStage("breath"));
+$("#tabTimer")?.addEventListener("click", () => switchStage("timer"));
+$("#tabGarden")?.addEventListener("click", () => switchStage("garden"));
+
 /* Живая навигация: шапка подсвечивает текущий раздел */
 const navSpyLinks = [...document.querySelectorAll(".tb-nav a")];
-const navSpySections = ["breath", "techniques", "timer", "sounds"];
+const navSpySections = ["breath", "timer", "sounds", "techniques", "quote"];
 function navSpyCheck() {
   let active = navSpySections[0];
   for (const id of navSpySections) {
     const el = document.getElementById(id);
-    if (el && el.getBoundingClientRect().top < window.innerHeight * 0.42) active = id;
+    if (el && !el.hidden && el.getBoundingClientRect().top < window.innerHeight * 0.42) active = id;
   }
   navSpyLinks.forEach((a) => a.classList.toggle("on", a.getAttribute("href") === `#${active}`));
 }
 navSpyCheck();
 
-window.addEventListener("hashchange", () => { revealCheck(); navSpyCheck(); });
+navSpyLinks.forEach((a) => {
+  a.addEventListener("click", (e) => {
+    const targetId = a.getAttribute("href")?.replace("#", "");
+    if (targetId === "timer" || targetId === "breath" || targetId === "garden") {
+      e.preventDefault();
+      switchStage(targetId);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  });
+});
+
+function applyHashStage() {
+  const h = (location.hash || "").replace("#", "");
+  if (h === "timer" || h === "breath" || h === "garden") switchStage(h);
+}
+window.addEventListener("hashchange", () => {
+  applyHashStage();
+  revealCheck();
+  navSpyCheck();
+});
 revealCheck();
 
 /* Живое стекло: блик следует за курсором */
@@ -2211,6 +2495,7 @@ const SOUND_RU = {
   rain: "Дождь", stream: "Ручей", ocean: "Океан", wind: "Ветер", fire: "Костёр",
   thunder: "Гроза", crickets: "Сверчки", birds: "Птицы", bowl: "Колокол",
   chimes: "Колокольчики", noise: "Белый шум", music: "Музыка", drone: "Тон-дрон",
+  purr: "Мурлыканье", roof: "По крыше", train: "Поезд",
 };
 
 // Команды собираются в момент открытия — состояние всегда актуальное
@@ -2342,3 +2627,471 @@ document.addEventListener("keydown", (e) => {
   }
 });
 $("#paletteBtn").addEventListener("click", openPalette);
+
+/* ------------------------- 🧠 Бинауральные ритмы (Stereo Brainwaves) ------------------------- */
+const BINAURAL_MODES = {
+  alpha: { base: 200, beat: 10, title: "Альфа-ритм (10 Гц): Релакс и спокойствие" },
+  theta: { base: 150, beat: 6, title: "Тета-ритм (6 Гц): Глубокая медитация" },
+  delta: { base: 100, beat: 2, title: "Дельта-ритм (2 Гц): Сон и восстановление" },
+  gamma: { base: 240, beat: 40, title: "Гамма-ритм (40 Гц): Концентрация и фокус" },
+};
+let curBinaural = null;
+let binNodes = null;
+
+function setBinaural(mode) {
+  ensureAudio();
+  if (binNodes) {
+    try {
+      const now = AC.currentTime;
+      binNodes.g.gain.setTargetAtTime(0.0001, now, 0.2);
+      setTimeout(() => {
+        try {
+          binNodes.oscL.stop(); binNodes.oscR.stop();
+          binNodes.oscL.disconnect(); binNodes.oscR.disconnect();
+        } catch {}
+        binNodes = null;
+      }, 300);
+    } catch {}
+  }
+  curBinaural = mode;
+  document.querySelectorAll(".bin-btn").forEach((b) => b.classList.toggle("active", (b.dataset.hz || "0") === (mode || "0")));
+
+  if (!mode || !BINAURAL_MODES[mode]) {
+    toast("Бинауральные волны выключены.");
+    return;
+  }
+  const conf = BINAURAL_MODES[mode];
+  const panL = AC.createStereoPanner(); panL.pan.value = -1;
+  const panR = AC.createStereoPanner(); panR.pan.value = 1;
+  const oscL = AC.createOscillator(); oscL.type = "sine"; oscL.frequency.value = conf.base - conf.beat / 2;
+  const oscR = AC.createOscillator(); oscR.type = "sine"; oscR.frequency.value = conf.base + conf.beat / 2;
+  const g = AC.createGain(); g.gain.value = 0.0001;
+  
+  oscL.connect(panL); panL.connect(g);
+  oscR.connect(panR); panR.connect(g);
+  g.connect(master);
+  
+  const now = AC.currentTime;
+  oscL.start(now); oscR.start(now);
+  g.gain.setTargetAtTime(0.18, now, 0.4);
+  binNodes = { oscL, oscR, g };
+  toast(`🎧 ${conf.title}`);
+}
+
+document.querySelectorAll(".bin-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const hz = btn.dataset.hz;
+    setBinaural(hz === "0" ? null : hz);
+  });
+});
+
+/* ------------------------- 🪨 Интерактивный Сад Дзен (Canvas) ------------------------- */
+let zenGardenInit = false;
+let gardenMode = "sand";
+let stones = [];
+let ripples = [];
+let isDrawing = false;
+let lastPt = null;
+
+function initZenGarden() {
+  const canvas = document.getElementById("zenCanvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  if (!zenGardenInit) {
+    zenGardenInit = true;
+    canvas.width = 560;
+    canvas.height = 400;
+    clearZenGarden(ctx);
+
+    const getPos = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: (clientX - rect.left) * (canvas.width / rect.width),
+        y: (clientY - rect.top) * (canvas.height / rect.height),
+      };
+    };
+
+    const startDraw = (e) => {
+      isDrawing = true;
+      lastPt = getPos(e);
+      if (gardenMode === "pond") {
+        addRipple(lastPt.x, lastPt.y);
+        playWaterDrop();
+      } else if (gardenMode === "stone") {
+        addStone(lastPt.x, lastPt.y, ctx);
+      }
+    };
+    const moveDraw = (e) => {
+      if (!isDrawing) return;
+      const pt = getPos(e);
+      if (gardenMode === "sand") {
+        drawRakeLines(ctx, lastPt.x, lastPt.y, pt.x, pt.y);
+        playRakeScrape();
+      } else if (gardenMode === "pond") {
+        if (Math.hypot(pt.x - lastPt.x, pt.y - lastPt.y) > 28) {
+          addRipple(pt.x, pt.y);
+          playWaterDrop();
+        }
+      }
+      lastPt = pt;
+    };
+    const endDraw = () => { isDrawing = false; lastPt = null; };
+
+    canvas.addEventListener("mousedown", startDraw);
+    canvas.addEventListener("mousemove", moveDraw);
+    window.addEventListener("mouseup", endDraw);
+
+    canvas.addEventListener("touchstart", (e) => { e.preventDefault(); startDraw(e); }, { passive: false });
+    canvas.addEventListener("touchmove", (e) => { e.preventDefault(); moveDraw(e); }, { passive: false });
+    canvas.addEventListener("touchend", endDraw);
+
+    canvas.addEventListener("dblclick", (e) => {
+      const pt = getPos(e);
+      addStone(pt.x, pt.y, ctx);
+    });
+
+    document.querySelectorAll(".g-tool").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".g-tool").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        gardenMode = btn.dataset.tool || "sand";
+      });
+    });
+
+    document.getElementById("gardenClear")?.addEventListener("click", () => {
+      clearZenGarden(ctx);
+      toast("Сад Дзен разглажен.");
+    });
+
+    function animPond() {
+      if (ripples.length > 0) redrawPond(ctx);
+      requestAnimationFrame(animPond);
+    }
+    requestAnimationFrame(animPond);
+  }
+}
+
+function clearZenGarden(ctx) {
+  const isNight = document.body.dataset.time === "night";
+  ctx.fillStyle = isNight ? "#101622" : "#e4dcce";
+  ctx.fillRect(0, 0, 560, 400);
+
+  // Песчаная текстура: легкие базовые горизонтальные дзен-борозды
+  ctx.strokeStyle = isNight ? "rgba(255, 255, 255, 0.03)" : "rgba(120, 90, 50, 0.06)";
+  ctx.lineWidth = 2;
+  for (let y = 15; y < 400; y += 14) {
+    ctx.beginPath();
+    ctx.moveTo(10, y);
+    ctx.lineTo(550, y);
+    ctx.stroke();
+  }
+
+  stones = [
+    { x: 160, y: 160, r: 26, a: -0.2 },
+    { x: 380, y: 240, r: 34, a: 0.35 },
+    { x: 420, y: 200, r: 18, a: 0.15 },
+  ];
+  ripples = [];
+  stones.forEach((s) => drawStone(ctx, s.x, s.y, s.r, s.a));
+}
+
+function drawRakeLines(ctx, x1, y1, x2, y2) {
+  const isNight = document.body.dataset.time === "night";
+  const dx = x2 - x1, dy = y2 - y1;
+  const len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len, ny = dx / len;
+  [-10, 0, 10].forEach((offset) => {
+    ctx.beginPath();
+    ctx.moveTo(x1 + nx * offset, y1 + ny * offset);
+    ctx.lineTo(x2 + nx * offset, y2 + ny * offset);
+    ctx.strokeStyle = isNight ? "rgba(255, 255, 255, 0.08)" : "rgba(100, 80, 50, 0.12)";
+    ctx.lineWidth = 4;
+    ctx.lineCap = "round";
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(x1 + nx * (offset - 1.5), y1 + ny * (offset - 1.5));
+    ctx.lineTo(x2 + nx * (offset - 1.5), y2 + ny * (offset - 1.5));
+    ctx.strokeStyle = isNight ? "rgba(0, 0, 0, 0.25)" : "rgba(255, 255, 255, 0.35)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+}
+
+function addStone(x, y, ctx) {
+  const r = 18 + Math.random() * 16;
+  const a = (Math.random() - 0.5) * 0.8;
+  stones.push({ x, y, r, a });
+  drawStone(ctx, x, y, r, a);
+}
+
+function drawStone(ctx, x, y, r, a) {
+  const isNight = document.body.dataset.time === "night";
+  ctx.save();
+  ctx.translate(x, y);
+
+  // Концентрические дзен-круги вокруг камня
+  ctx.strokeStyle = isNight ? "rgba(255, 255, 255, 0.16)" : "rgba(100, 70, 40, 0.25)";
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 1.45, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 1.9, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Тень
+  ctx.beginPath();
+  ctx.arc(4, 8, r * 1.05, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+  ctx.fill();
+
+  // Камень
+  const grad = ctx.createRadialGradient(0, 0, r * 0.1, 0, 0, r);
+  if (isNight) {
+    grad.addColorStop(0, "#a0b8d0");
+    grad.addColorStop(0.6, "#55677c");
+    grad.addColorStop(1, "#202a36");
+  } else {
+    grad.addColorStop(0, "#c2bcb0");
+    grad.addColorStop(0.6, "#6e685c");
+    grad.addColorStop(1, "#36322b");
+  }
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Блик
+  ctx.beginPath();
+  ctx.arc(-r * 0.3, -r * 0.3, r * 0.25, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(255, 255, 255, 0.45)";
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function addRipple(x, y) {
+  ripples.push({ x, y, r: 6, maxR: 70 + Math.random() * 40, alpha: 0.85 });
+}
+
+function redrawPond(ctx) {
+  const isNight = document.body.dataset.time === "night";
+  ctx.fillStyle = isNight ? "rgba(10, 16, 26, 0.08)" : "rgba(225, 235, 245, 0.08)";
+  ctx.fillRect(0, 0, 560, 400);
+
+  for (let i = ripples.length - 1; i >= 0; i--) {
+    const rip = ripples[i];
+    rip.r += 1.8;
+    rip.alpha -= 0.016;
+    if (rip.alpha <= 0 || rip.r >= rip.maxR) {
+      ripples.splice(i, 1);
+      continue;
+    }
+    ctx.beginPath();
+    ctx.arc(rip.x, rip.y, rip.r, 0, Math.PI * 2);
+    ctx.strokeStyle = isNight ? `rgba(120, 200, 255, ${rip.alpha * 0.5})` : `rgba(45, 140, 210, ${rip.alpha * 0.4})`;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+  }
+  stones.forEach((s) => drawStone(ctx, s.x, s.y, s.r, s.a));
+}
+
+let rakeTimer = 0;
+function playRakeScrape() {
+  const now = Date.now();
+  if (now - rakeTimer < 140) return;
+  rakeTimer = now;
+  try {
+    ensureAudio();
+    const src = AC.createBufferSource();
+    src.buffer = noiseBuffer("white");
+    const bp = filter("bandpass", 650, 1.5);
+    const g = AC.createGain();
+    const t0 = AC.currentTime;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(0.035, t0 + 0.02);
+    g.gain.linearRampToValueAtTime(0.0001, t0 + 0.12);
+    src.connect(bp); bp.connect(g); g.connect(master);
+    src.start(t0); src.stop(t0 + 0.14);
+  } catch {}
+}
+
+let waterTimer = 0;
+function playWaterDrop() {
+  const now = Date.now();
+  if (now - waterTimer < 180) return;
+  waterTimer = now;
+  try {
+    ensureAudio();
+    const t0 = AC.currentTime;
+    const osc = AC.createOscillator(); osc.type = "sine";
+    osc.frequency.setValueAtTime(800 + Math.random() * 400, t0);
+    osc.frequency.exponentialRampToValueAtTime(260, t0 + 0.14);
+    const g = AC.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.06, t0 + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.15);
+    osc.connect(g); g.connect(master);
+    osc.start(t0); osc.stop(t0 + 0.16);
+  } catch {}
+}
+
+/* ------------------------- 🌌 Полноэкранные живые сцены (Scenery) ------------------------- */
+const sceneryOverlay = $("#sceneryOverlay");
+const sceneryCanvas = $("#sceneryCanvas");
+let sceneryCtx = null;
+let sceneryMode = "fire";
+let sceneryAnimId = null;
+let sceneryItems = [];
+
+function openScenery(on) {
+  sceneryOverlay.hidden = !on;
+  if (on) {
+    document.body.style.overflow = "hidden";
+    if (!sceneryCtx) sceneryCtx = sceneryCanvas.getContext("2d");
+    resizeScenery();
+    initSceneryMode();
+    loopScenery();
+  } else {
+    document.body.style.overflow = "";
+    if (sceneryAnimId) { cancelAnimationFrame(sceneryAnimId); sceneryAnimId = null; }
+  }
+}
+
+function resizeScenery() {
+  if (!sceneryCanvas) return;
+  sceneryCanvas.width = window.innerWidth;
+  sceneryCanvas.height = window.innerHeight;
+}
+window.addEventListener("resize", () => {
+  if (!sceneryOverlay?.hidden) resizeScenery();
+});
+
+function initSceneryMode() {
+  sceneryItems = [];
+  const w = sceneryCanvas.width, h = sceneryCanvas.height;
+  if (sceneryMode === "fire") {
+    for (let i = 0; i < 90; i++) {
+      sceneryItems.push({
+        x: w / 2 + (Math.random() - 0.5) * (w * 0.35),
+        y: h * 0.85 + Math.random() * (h * 0.15),
+        vy: 1.5 + Math.random() * 3.5,
+        vx: (Math.random() - 0.5) * 1.5,
+        r: 3 + Math.random() * 8,
+        life: Math.random(),
+        maxLife: 0.7 + Math.random() * 0.6,
+      });
+    }
+  } else if (sceneryMode === "stars") {
+    for (let i = 0; i < 180; i++) {
+      sceneryItems.push({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        r: 0.8 + Math.random() * 2.2,
+        twinkle: Math.random() * Math.PI * 2,
+        speed: 0.02 + Math.random() * 0.04,
+      });
+    }
+  } else if (sceneryMode === "ocean") {
+    for (let i = 0; i < 50; i++) {
+      sceneryItems.push({
+        y: h * 0.55 + (i / 50) * (h * 0.45),
+        phase: Math.random() * Math.PI * 2,
+        speed: 0.02 + (i / 50) * 0.03,
+      });
+    }
+  }
+}
+
+function loopScenery() {
+  if (sceneryOverlay.hidden) return;
+  const ctx = sceneryCtx;
+  const w = sceneryCanvas.width, h = sceneryCanvas.height;
+
+  if (sceneryMode === "fire") {
+    ctx.fillStyle = "rgba(8, 5, 4, 0.25)";
+    ctx.fillRect(0, 0, w, h);
+    const glow = ctx.createRadialGradient(w / 2, h * 0.88, 40, w / 2, h * 0.88, w * 0.45);
+    glow.addColorStop(0, "rgba(255, 100, 20, 0.22)");
+    glow.addColorStop(1, "rgba(0, 0, 0, 0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, w, h);
+
+    sceneryItems.forEach((p) => {
+      p.y -= p.vy;
+      p.x += p.vx + (Math.random() - 0.5) * 0.8;
+      p.life += 0.012;
+      const progress = p.life / p.maxLife;
+      if (progress >= 1) {
+        p.x = w / 2 + (Math.random() - 0.5) * (w * 0.35);
+        p.y = h * 0.88 + Math.random() * 20;
+        p.life = 0;
+      }
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, Math.max(0.5, p.r * (1 - progress * 0.7)), 0, Math.PI * 2);
+      const r = 255;
+      const g = Math.floor(180 * (1 - progress * 0.9));
+      const b = Math.floor(40 * (1 - progress));
+      const a = (1 - progress) * 0.8;
+      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
+      ctx.fill();
+    });
+  } else if (sceneryMode === "stars") {
+    ctx.fillStyle = "rgba(4, 6, 12, 0.3)";
+    ctx.fillRect(0, 0, w, h);
+    sceneryItems.forEach((s) => {
+      s.twinkle += s.speed;
+      const alpha = 0.3 + 0.6 * (0.5 + 0.5 * Math.sin(s.twinkle));
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(220, 235, 255, ${alpha})`;
+      ctx.fill();
+    });
+  } else if (sceneryMode === "ocean") {
+    ctx.fillStyle = "rgba(4, 8, 16, 0.25)";
+    ctx.fillRect(0, 0, w, h);
+    ctx.beginPath();
+    ctx.arc(w / 2, h * 0.22, 34, 0, Math.PI * 2);
+    ctx.fillStyle = "#fffaed";
+    ctx.shadowColor = "#fffaed"; ctx.shadowBlur = 40;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    sceneryItems.forEach((wave) => {
+      wave.phase += wave.speed;
+      ctx.beginPath();
+      ctx.moveTo(0, wave.y);
+      for (let x = 0; x <= w; x += 30) {
+        const yOffset = Math.sin(x * 0.015 + wave.phase) * 6;
+        ctx.lineTo(x, wave.y + yOffset);
+      }
+      ctx.strokeStyle = `rgba(180, 220, 255, ${0.08 + 0.12 * Math.sin(wave.phase)})`;
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+    });
+  }
+
+  sceneryAnimId = requestAnimationFrame(loopScenery);
+}
+
+$("#sceneryBtn")?.addEventListener("click", () => openScenery(true));
+$("#sceneryExit")?.addEventListener("click", () => openScenery(false));
+document.querySelectorAll(".sc-tab").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".sc-tab").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    sceneryMode = btn.dataset.scene || "fire";
+    initSceneryMode();
+  });
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !sceneryOverlay?.hidden) openScenery(false);
+});
+
+// Инициализация активной вкладки по хэшу URL (#timer, #breath, #garden)
+applyHashStage();
+
