@@ -2696,6 +2696,9 @@ let lastPt = null;
 function initZenGarden() {
   const canvas = document.getElementById("zenCanvas");
   if (!canvas) return;
+  canvas.style.touchAction = "none";
+  canvas.addEventListener("touchstart", (e) => e.preventDefault(), { passive: false });
+  canvas.addEventListener("touchmove", (e) => e.preventDefault(), { passive: false });
   const ctx = canvas.getContext("2d");
   if (!zenGardenInit) {
     zenGardenInit = true;
@@ -2948,18 +2951,54 @@ let sceneryMode = "fire";
 let sceneryAnimId = null;
 let sceneryItems = [];
 
+let lastFocusEl = null;
 function openScenery(on) {
   sceneryOverlay.hidden = !on;
   if (on) {
+    lastFocusEl = document.activeElement;
     document.body.style.overflow = "hidden";
     if (!sceneryCtx) sceneryCtx = sceneryCanvas.getContext("2d");
     resizeScenery();
     initSceneryMode();
     loopScenery();
+    setTimeout(() => sceneryOverlay.focus(), 60);
   } else {
     document.body.style.overflow = "";
     if (sceneryAnimId) { cancelAnimationFrame(sceneryAnimId); sceneryAnimId = null; }
+    if (lastFocusEl && typeof lastFocusEl.focus === "function") lastFocusEl.focus();
   }
+}
+
+if (sceneryOverlay) {
+  sceneryOverlay.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      openScenery(false);
+      return;
+    }
+    if (e.key === "Tab") {
+      const focusable = Array.from(sceneryOverlay.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')).filter(el => {
+        if (el.disabled) return false;
+        if (el.hidden) return false;
+        const rect = el.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
+      });
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first || !sceneryOverlay.contains(document.activeElement)) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+  });
 }
 
 function resizeScenery() {
@@ -3078,8 +3117,11 @@ function loopScenery() {
   sceneryAnimId = requestAnimationFrame(loopScenery);
 }
 
+$("#sceneryBtn")?.setAttribute("aria-haspopup", "dialog");
 $("#sceneryBtn")?.addEventListener("click", () => openScenery(true));
-$("#sceneryExit")?.addEventListener("click", () => openScenery(false));
+const sceneryExitBtn = $("#sceneryExit");
+sceneryExitBtn?.setAttribute("aria-label", "Закрыть медитативные сцены (Esc)");
+sceneryExitBtn?.addEventListener("click", () => openScenery(false));
 document.querySelectorAll(".sc-tab").forEach((btn) => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".sc-tab").forEach((b) => b.classList.remove("active"));

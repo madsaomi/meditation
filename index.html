@@ -18,6 +18,9 @@
 </head>
 <body>
 
+  <!-- Пропуск к основному контенту -->
+  <a href="#mainContent" class="skip-link">Перейти к основному контенту</a>
+
   <!-- Эфирные фоновые ауры -->
   <div class="ambient-glows" aria-hidden="true">
     <div class="amb-orb orb-1"></div>
@@ -48,7 +51,7 @@
   </header>
 
   <!-- Основное пространство: Студия + Bento Grid -->
-  <main class="content studio-layout">
+  <main id="mainContent" class="content studio-layout">
 
     <!-- ЛЕВАЯ КОЛОНКА: СТУДИЙНАЯ СЦЕНА ПРАКТИКИ -->
     <div class="studio-main">
@@ -185,7 +188,7 @@
           </div>
         </div>
         <div class="garden-wrap">
-          <canvas id="zenCanvas" width="560" height="400"></canvas>
+          <canvas id="zenCanvas" width="560" height="400" role="img" tabindex="0" aria-label="Интерактивный Сад Дзен. Ведите курсором для рисования граблями по песку, переключайтесь на инструменты вода и камни."></canvas>
           <p class="garden-hint">Ведите пальцем или курсором для рисования узоров · Двойной клик ставит речной камень</p>
         </div>
       </section>
@@ -344,8 +347,8 @@
   </div>
 
   <!-- Полноэкранные живые медитативные сцены (Залипание) -->
-  <div id="sceneryOverlay" class="scenery-overlay" role="dialog" aria-label="Медитативные сцены" hidden>
-    <canvas id="sceneryCanvas"></canvas>
+  <div id="sceneryOverlay" class="scenery-overlay" role="dialog" aria-modal="true" aria-label="Медитативные сцены" tabindex="-1" hidden>
+    <canvas id="sceneryCanvas" role="img" tabindex="0" aria-label="Живая медитативная сцена"></canvas>
     <div class="scenery-hud">
       <div class="scenery-tabs">
         <button class="chip active sc-tab" data-scene="fire">🔥 Живой камин</button>
