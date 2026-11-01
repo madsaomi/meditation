@@ -243,9 +243,7 @@ body[data-time="night"] .aurora {
   font-weight: 800;
   font-size: 15px;
   letter-spacing: -0.3px;
-  background: linear-gradient(135deg, var(--text) 40%, var(--accent) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -333,7 +331,7 @@ body[data-time="night"] .aurora {
 }
 .btn.primary:hover {
   transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 14px 32px -4px color-mix(in srgb, var(--accent) 60%, transparent);
+  box-shadow: 0 10px 24px -8px color-mix(in srgb, var(--accent) 45%, transparent);
 }
 .btn.primary:active { transform: translateY(1px) scale(.98); }
 
@@ -382,9 +380,18 @@ body[data-time="night"] .aurora {
   font-weight: 700;
   box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 32%, transparent);
 }
+/* Тихие иконки-кнопки: без постоянной рамки — проявляются при наведении */
 .icon-chip {
   padding: 7px 11px;
+  border-color: transparent;
+  background: transparent;
 }
+.icon-chip:hover {
+  border-color: var(--edge);
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  transform: none;
+}
+.icon-chip:active { transform: none; }
 
 .chips {
   display: flex;
@@ -479,8 +486,8 @@ body[data-time="night"] .aurora {
   overflow: hidden;
 }
 .card:hover {
-  border-color: color-mix(in srgb, var(--accent) 35%, var(--edge));
-  box-shadow: 0 24px 50px -12px color-mix(in srgb, var(--accent) 14%, rgba(0,0,0,0.18)), 0 0 0 1px rgba(255, 255, 255, 0.22) inset;
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--edge));
+  box-shadow: 0 16px 36px -16px color-mix(in srgb, var(--accent) 10%, rgba(0, 0, 0, 0.16)), 0 0 0 1px rgba(255, 255, 255, 0.18) inset;
 }
 
 .card-head {
@@ -495,9 +502,7 @@ body[data-time="night"] .aurora {
   font-size: 19px;
   font-weight: 700;
   letter-spacing: -0.3px;
-  background: linear-gradient(135deg, var(--text) 40%, color-mix(in srgb, var(--text) 45%, var(--accent)) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -563,9 +568,7 @@ body[data-time="night"] .aurora {
   font-size: 26px;
   font-weight: 800;
   letter-spacing: -0.5px;
-  background: linear-gradient(135deg, var(--text) 40%, var(--accent) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text);
 }
 .hero-sub {
   font-size: 12.5px;
@@ -1160,7 +1163,7 @@ body[data-time="night"] .bp-circle {
   max-width: 480px;
   width: 100%;
   text-align: center;
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.32);
 }
 .ov-step {
   font-size: 20px;
@@ -1212,7 +1215,7 @@ body[data-time="night"] .bp-circle {
   max-width: 520px;
   width: 100%;
   padding: 16px;
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.32);
 }
 #paletteInput {
   width: 100%;
@@ -1281,7 +1284,6 @@ body[data-time="night"] .bp-circle {
   background: #020305;
   display: grid;
   place-items: center;
-  position: relative;
 }
 .nm-glow {
   position: absolute;
@@ -1503,7 +1505,7 @@ body.focus-mode .focus-exit { display: flex; }
   .chip { min-height: 44px; min-width: 44px; }
   .btn { min-height: 44px; }
   .icon-chip { min-width: 44px; min-height: 44px; }
-  #zenCanvas, .zenCanvas, #sceneryCanvas { touch-action: none; }
+  #zenCanvas, #sceneryCanvas { touch-action: none; }
   .sound-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1531,3 +1533,265 @@ body.focus-mode .focus-exit { display: flex; }
     transform: none !important;
   }
 }
+
+/* ============================================================
+   v48 POLISH & FIX — анимации, ретина-холсты, фокус, ночник
+   ============================================================ */
+
+/* ── Вкладки студии: мягкое появление активной сцены ── */
+@keyframes stageIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.stage-card:not([hidden]) {
+  animation: stageIn .45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Модалки и пульт ⌘K: pop-in вместо резкого скачка ── */
+@keyframes popIn {
+  from { opacity: 0; transform: scale(.96) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.ov-card   { animation: popIn .3s cubic-bezier(0.16, 1, 0.3, 1); }
+.palette   { animation: popIn .25s cubic-bezier(0.16, 1, 0.3, 1); }
+.scenery-hud { animation: stageIn .5s cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* Ночник: плавное включение прикроватного экрана */
+@keyframes nmIn { from { opacity: 0; } to { opacity: 1; } }
+.nightmode:not([hidden]) { animation: nmIn .9s ease; cursor: pointer; }
+.nm-time {
+  font-size: clamp(64px, 17vw, 120px);
+  font-weight: 200;
+  letter-spacing: .05em;
+  font-variant-numeric: tabular-nums;
+  color: rgba(226, 232, 240, .82);
+  text-shadow: 0 0 60px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+/* ── Появление секций при прокрутке (оживлённый revealCheck) ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity .7s ease, transform .7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ── Кольцо таймера: пульс при мягком звонке якоря ── */
+@keyframes bellPulse {
+  0%   { stroke-width: 8; filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 60%, transparent)); }
+  35%  { stroke-width: 13; filter: drop-shadow(0 0 26px color-mix(in srgb, var(--accent) 95%, transparent)); }
+  100% { stroke-width: 8; filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 60%, transparent)); }
+}
+.ring-val.bell-pulse { animation: bellPulse 1.2s ease; }
+
+/* ── «Мысль дня»: мягкий fadeUp при каждой смене ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.quote.quote-in { animation: fadeUp .5s ease; }
+
+/* ── Приглашающее дыхание главной кнопки в покое ── */
+@keyframes ctaGlow {
+  0%, 100% { box-shadow: 0 10px 24px -4px color-mix(in srgb, var(--accent) 45%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
+  50%      { box-shadow: 0 16px 40px -4px color-mix(in srgb, var(--accent) 72%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
+}
+#breathBtn:not(:hover) { animation: ctaGlow 3.2s ease-in-out infinite; }
+
+/* ── Стрик-пилль: лёгкий bump при завершённой практике ── */
+@keyframes pillBump {
+  50% { transform: scale(1.16); }
+}
+.streak-pill.bump { animation: pillBump .5s ease; }
+
+/* ── Доступный фокус: единое акцентное кольцо ── */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.custom-min:focus-visible { outline: 2px solid var(--accent); }
+
+/* ── Мобильные тач-таргеты: чипы чек-ина и рубрик ≥ 44px ── */
+@media (max-width: 600px) {
+  .mc-btn, .qt-chip {
+    min-height: 44px;
+    padding: 8px 14px;
+  }
+}
+
+/* ── REDUCED-MOTION v48: гасим и новые движения ── */
+@media (prefers-reduced-motion: reduce) {
+  .breath-petals, .nm-glow, .nightmode, .ov-card, .palette, .scenery-hud,
+  .stage-card, .streak-pill.bump, #breathBtn, .ring-val.bell-pulse, .quote.quote-in {
+    animation: none !important;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none !important;
+  }
+}
+
+/* ============================================================
+   v49 PWA + MOBILE + STATS — иконки, мобильная навигация,
+   карточка «Практика», loading цитаты
+   ============================================================ */
+
+/* Мобильные тапы без серых вспышек — отклик дают собственные стили */
+* { -webkit-tap-highlight-color: transparent; }
+
+/* ── Мобильная навигация: капсула разделов в шапке ── */
+@media (max-width: 600px) {
+  .topbar {
+    flex-wrap: wrap;
+    row-gap: 2px;
+    padding: 6px 12px;
+  }
+  .tb-actions {
+    overflow-x: auto;
+    scrollbar-width: none;
+    min-width: 0;
+    padding: 2px 0;
+  }
+  .tb-actions::-webkit-scrollbar { display: none; }
+  .tb-nav {
+    display: flex;
+    order: 3;
+    width: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tb-nav::-webkit-scrollbar { display: none; }
+  .tb-nav a {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 4px 12px;
+    font-size: 12.5px;
+  }
+  .content.studio-layout { padding-top: 124px; }
+}
+
+/* ── Карточка «Практика»: показатели и бары 7 дней ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 4px 0 14px;
+}
+.stat-box {
+  background: color-mix(in srgb, var(--text) 4%, transparent);
+  border: 1px solid var(--edge);
+  border-radius: 14px;
+  padding: 12px 10px;
+  text-align: center;
+}
+.stat-box b {
+  display: block;
+  font-size: 21px;
+  font-weight: 800;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.3px;
+}
+.stat-box span {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: .2px;
+}
+.spark {
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+  height: 58px;
+  padding: 0 4px;
+}
+.spark i {
+  flex: 1;
+  min-height: 5px;
+  border-radius: 4px 4px 2px 2px;
+  background: linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--accent) 35%, transparent));
+  transform-origin: bottom;
+  animation: barUp .6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+.spark i.empty {
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+@keyframes barUp {
+  from { transform: scaleY(0); }
+}
+
+/* ── Кнопка цитаты: спиннер на время загрузки ── */
+.btn.loading { opacity: .65; pointer-events: none; }
+.btn.loading::after {
+  content: "";
+  width: 12px;
+  height: 12px;
+  flex: none;
+  border: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  margin-left: 8px;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── REDUCED-MOTION v49 ── */
+@media (prefers-reduced-motion: reduce) {
+  .spark i, .btn.loading::after { animation: none !important; }
+}
+
+/* ============================================================
+   v50 CONTENT & DELIGHTS — компактный топбар, офлайн-бейдж
+   ============================================================ */
+
+/* Топбар набирает плотность, когда страница прокручена */
+.topbar.compact {
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  box-shadow: 0 12px 32px -14px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  transition: background .3s ease, box-shadow .3s ease;
+}
+
+/* Бейдж отсутствия сети */
+.offline-badge {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #f87171;
+  background: color-mix(in srgb, #f87171 12%, transparent);
+  border: 1px solid color-mix(in srgb, #f87171 32%, transparent);
+  border-radius: var(--radius-btn);
+  padding: 4px 10px;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+.offline-badge[hidden] { display: none; }
+
+/* ── Утилиты 8pt-сетки ── */
+.mt-1 { margin-top: 4px; }
+.mt-2 { margin-top: 8px; }
+.mt-3 { margin-top: 16px; }
+.m-y-2 { margin-top: 8px; margin-bottom: 8px; }
+
+/* Спокойный терракотовый статус вместо тревожного красного */
+.offline-badge, #quoteSource.warn {
+  color: #b97a56;
+}
+.offline-badge {
+  background: color-mix(in srgb, #b97a56 12%, transparent);
+  border-color: color-mix(in srgb, #b97a56 30%, transparent);
+}
+#quoteSource.warn {
+  background: color-mix(in srgb, #b97a56 10%, transparent);
+  border-color: color-mix(in srgb, #b97a56 35%, transparent);
+}
+
+/* ── Футер ── */
+.foot { flex-wrap: wrap; gap: 8px; }
+.foot-link { color: var(--muted); text-decoration: none; border-bottom: 1px dashed color-mix(in srgb, var(--muted) 45%, transparent); }
+.foot-link:hover { color: var(--accent); border-bottom-color: var(--accent); }

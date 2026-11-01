@@ -5,16 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Тихий ум — медитация и дыхание</title>
   <meta name="description" content="Спокойное приложение для медитации: дыхательные практики, таймер, тихие звуки и мудрые мысли. Всё содержимое приходит с внешних API."/>
-  <link rel="manifest" href="manifest.webmanifest?v=47"/>
+  <link rel="manifest" href="manifest.webmanifest?v=51"/>
   <meta name="theme-color" id="themeColor" content="#07090e"/>
   <meta property="og:title" content="Тихий ум — медитация и дыхание"/>
   <meta property="og:description" content="Спокойные дыхательные практики, таймер, тихие звуки и мудрые мысли с внешних API."/>
   <meta property="og:type" content="website"/>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='36' fill='none' stroke='%232dd4bf' stroke-width='7'/><circle cx='50' cy='50' r='17' fill='%232dd4bf'/></svg>"/>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Cormorant+Garamond:ital,wght@1,500;1,600&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="style.css?v=47"/>
+  <link rel="stylesheet" href="style.css?v=51"/>
 </head>
 <body>
 
@@ -42,7 +43,7 @@
       <div class="sound-wave" id="soundWave" title="Играют звуки" aria-hidden="true" hidden><i></i><i></i><i></i></div>
       <span class="streak-pill" title="Дней подряд">🔥 <b id="statStreakMini">0</b></span>
       <button class="chip icon-chip" id="voiceBtn" aria-pressed="false" title="Голосовые подсказки" aria-label="Голосовые подсказки">🔇</button>
-      <button class="chip" id="themeBtn" title="Переключить тему день/ночь">☾ Ночь</button>
+      <button class="chip icon-chip" id="themeBtn" title="Переключить тему день/ночь" aria-label="Переключить тему день/ночь">☾</button>
       <button class="chip" id="sceneryBtn" title="Полноэкранные живые сцены для созерцания">🌌 Сцены</button>
       <button class="chip" id="focusBtn" title="Скрыть всё, оставить только дыхание">⛶ Фокус</button>
       <button class="chip icon-chip" id="paletteBtn" title="Пульт команд (Ctrl+K)" aria-label="Пульт команд">🔍</button>
@@ -100,7 +101,7 @@
         </div>
 
         <div class="chips center-chips" id="patternChips"></div>
-        <p class="muted small text-center" id="patternHint" style="margin: 8px 0;"></p>
+        <p class="muted small text-center m-y-2" id="patternHint"></p>
         
         <div class="fx-row center-row">
           <button class="chip" id="breathFxChip" aria-pressed="false" title="Едва слышный вдох-выдох и лёгкий вибро-такт на смене фаз">🌬 Звук и вибро при смене фаз</button>
@@ -152,7 +153,7 @@
             </div>
           </div>
           <div class="chips center-chips" id="timerChips"></div>
-          <div class="center-btn" style="margin: 12px 0 16px;">
+          <div class="center-btn">
             <button class="btn primary big" id="timerBtn">Старт</button>
             <button class="btn ghost" id="timerReset">Сброс</button>
           </div>
@@ -199,7 +200,7 @@
     <div class="studio-bento">
 
       <!-- Bento 1: Мысль дня -->
-      <section id="quote" class="card">
+      <section id="quote" class="card reveal">
         <div class="card-head">
           <h2><span class="num">01</span>Мысль дня</h2>
           <div class="head-tags">
@@ -215,21 +216,22 @@
         </div>
         <blockquote id="quoteText" class="quote skel">Загружаем мысль с API…</blockquote>
         <div class="author" id="quoteAuthor"></div>
-        <div class="btn-row center-row" style="margin-top: 10px;">
+        <div class="btn-row center-row mt-2">
           <button class="btn ghost" id="quoteBtn">Ещё мысль</button>
           <button class="btn ghost" id="quoteSay">🎧 Послушать</button>
           <button class="chip icon-chip" id="quoteCopy" title="Скопировать мысль в буфер обмена" aria-label="Скопировать мысль">⧉</button>
+          <button class="chip icon-chip" id="quoteShare" title="Поделиться мыслью" aria-label="Поделиться мыслью" hidden>✦</button>
         </div>
       </section>
 
       <!-- Bento 2: Звуковой ландшафт -->
-      <section id="sounds" class="card">
+      <section id="sounds" class="card reveal">
         <div class="card-head">
           <h2><span class="num">02</span>Звуки природы</h2>
           <span class="tag">16 источников</span>
         </div>
         <p class="muted small">Смешивайте источники как угодно или выберите готовый микс:</p>
-        <div class="mix-row" style="margin-top: 8px;">
+        <div class="mix-row mt-2">
           <div class="chips" id="mixChips"></div>
         </div>
         <div class="sound-grid" id="soundGrid">
@@ -269,7 +271,7 @@
           <div class="binaural-head">
             <span class="mix-label">🧠 Бинауральные волны (для стереонаушников):</span>
           </div>
-          <div class="chips" id="binauralChips" style="margin-top: 6px;">
+          <div class="chips mt-2" id="binauralChips">
             <button class="chip bin-btn active" data-hz="0">Выкл</button>
             <button class="chip bin-btn" data-hz="alpha" title="10 Гц — Снятие стресса, релаксация и творческий поток">🌿 Альфа 10 Гц</button>
             <button class="chip bin-btn" data-hz="theta" title="6 Гц — Глубокая медитация и полудрёма">🧘 Тета 6 Гц</button>
@@ -280,7 +282,7 @@
       </section>
 
       <!-- Bento 3: Экспресс-техники -->
-      <section id="techniques" class="card">
+      <section id="techniques" class="card reveal">
         <div class="card-head">
           <h2><span class="num">03</span>Экспресс-техники</h2>
           <span class="tag">1–5 мин</span>
@@ -289,12 +291,28 @@
         <div class="tech-row" id="techRow"></div>
       </section>
 
+      <!-- Bento 4: Практика (статистика) -->
+      <section id="stats" class="card reveal">
+        <div class="card-head">
+          <h2><span class="num">04</span>Практика</h2>
+          <span class="tag">последние 7 дней</span>
+        </div>
+        <div class="stats-row">
+          <div class="stat-box"><b id="statSessions">0</b><span>сеансов</span></div>
+          <div class="stat-box"><b id="statMinutes">0</b><span>минут</span></div>
+          <div class="stat-box"><b id="statStreak">0</b><span>дней подряд</span></div>
+        </div>
+        <div class="spark" id="statSpark" aria-hidden="true"></div>
+        <p class="muted small text-center mt-2" id="statHint">Каждая завершённая сессия и экспресс-техника — плюс к прогрессу.</p>
+      </section>
+
     </div>
 
   </main>
 
   <footer class="foot">
-    <span>Данные: Wikiquote · Advice Slip · DummyJSON · MyMemory · SoundHelix · Web Audio API</span>
+    <span>Тихий ум · v51 · <a href="LICENSE" class="foot-link">MIT</a></span>
+    <span>Данные: Wikiquote · Advice Slip · DummyJSON · MyMemory · SoundHelix</span>
     <span>Практикуйте с ♥ ежедневно</span>
   </footer>
 
@@ -359,8 +377,8 @@
     </div>
   </div>
 
-  <script src="config.js?v=47"></script>
-  <script src="app.js?v=47"></script>
+  <script src="config.js?v=51"></script>
+  <script src="app.js?v=51"></script>
   <script>
     // PWA: регистрация service worker (на file:// он не работает — там приложение и так открыто с диска)
     if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {

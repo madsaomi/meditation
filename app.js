@@ -89,6 +89,11 @@ const QUOTE_SOURCES = [
           .replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, "$2")
           .replace(/\[\[([^\]]+)\]\]/g, "$1")
           .replace(/'{2,}/g, "")
+          // HTML, просочившийся в wikitext: переносы — в пробел, теги — долой
+          .replace(/<br\s*\/?>/gi, " ")
+          .replace(/<\/?[a-z][^>]*>/gi, "")
+          .replace(/&nbsp;/gi, " ")
+          .replace(/\s{2,}/g, " ")
           .replace(/^[:*]+\s*/, "")
           .replace(/^—\s*/, "")
           .trim();
@@ -171,6 +176,10 @@ const FALLBACK_QUOTES = [
   { text: "Каждое утро мы рождаемся заново. Важно то, чем мы станем сегодня.", author: "Будда" },
   { text: "Тишина — иногда самый лучший ответ.", author: "Народная мудрость" },
   { text: "Не всегда нужно спешить. Медленный шаг тоже приводит к цели.", author: "Моцарт" },
+  { text: "Нет пути к миру. Мир — это путь.", author: "Будда" },
+  { text: "Вчера я был умён, поэтому хотел изменить мир. Сегодня я мудр, поэтому меняю себя.", author: "Руми" },
+  { text: "Где бы вы ни были — будьте там полностью.", author: "Конфуций" },
+  { text: "Всё течёт — и ничего не стоит на месте.", author: "Гераклит" },
 ];
 
 const TOPIC_QUOTES = {
@@ -182,6 +191,9 @@ const TOPIC_QUOTES = {
     { text: "Тот, кто боится будущего, теряет настоящее.", author: "Сенека", label: "Стоицизм · О скоротечности жизни" },
     { text: "Счастье твоей жизни зависит от качества твоих мыслей.", author: "Марк Аврелий", label: "Стоицизм · Осознанность" },
     { text: "Не требуй, чтобы события происходили так, как ты хочешь; желай, чтобы они происходили так, как происходят.", author: "Эпиктет", label: "Стоицизм · Принятие" },
+    { text: "Пока мы откладываем жизнь, она проходит.", author: "Сенека", label: "Стоицизм · О скоротечности" },
+    { text: "Сначала скажи себе, кем ты хочешь стать — а потом делай то, что должен.", author: "Эпиктет", label: "Стоицизм · Направление" },
+    { text: "Делай, что должно, и пусть будет, что будет.", author: "Марк Аврелий", label: "Стоицизм · Спокойствие действия" },
   ],
   zen: [
     { text: "Путь в тысячу ли начинается с одного спокойного шага.", author: "Лао-цзы", label: "Дао дэ цзин" },
@@ -191,6 +203,9 @@ const TOPIC_QUOTES = {
     { text: "В уме новичка содержится множество возможностей, в уме эксперта — лишь несколько.", author: "Сюнрю Судзуки", label: "Дзен · Сознание новичка" },
     { text: "Не ищите истину вовне, просто перестаньте цепляться за суждения.", author: "Сен-цан", label: "Дзен · Доверие сердцу" },
     { text: "Если чашка полна, в неё невозможно ничего налить. Опустошите свой ум.", author: "Притча о мастере", label: "Дзен · Пустота" },
+    { text: "Кто знает других — умён; кто знает себя — мудр.", author: "Лао-цзы", label: "Дао · Самопознание" },
+    { text: "Не важно, что идёшь медленно, — важно, что не останавливаешься.", author: "Конфуций", label: "Восточная мудрость · Постоянство" },
+    { text: "Прежде чем просветлеть — руби дрова, носи воду. После — руби дрова, носи воду.", author: "Дзенская притча", label: "Дзен · Обыденность" },
   ],
   mind: [
     { text: "Дыхание — это якорь, возвращающий нас в настоящий момент.", author: "Тит Нат Хан", label: "Осознанность · Мир в каждом шаге" },
@@ -199,6 +214,9 @@ const TOPIC_QUOTES = {
     { text: "Настоящая медитация начинается тогда, когда вы встаете с коврика в повседневную жизнь.", author: "Джидду Кришнамурти", label: "Осознанность · Жизнь" },
     { text: "Примите то, что есть, и только тогда начнётся подлинная трансформация.", author: "Экхарт Толле", label: "Сила настоящего" },
     { text: "Улыбнитесь своему дыханию. Это величайший подарок жизни.", author: "Тит Нат Хан", label: "Осознанность · Радость" },
+    { text: "Ты не капля в океане — ты целый океан в капле.", author: "Руми", label: "Мудрость Востока · Целое" },
+    { text: "Между стимулом и реакцией есть пространство — в нём наша свобода.", author: "Виктор Франкл", label: "Осознанность · Пауза" },
+    { text: "Простота, простота и ещё раз простота.", author: "Генри Торо", label: "Осознанность · Простота" },
   ],
 };
 
@@ -216,8 +234,11 @@ const TOD_MOOD_TAG = {
 };
 
 function renderQuote(text, author, label, warn) {
-  $("#quoteText").classList.remove("skel");
-  $("#quoteText").textContent = `«${text}»`;
+  const quoteEl = $("#quoteText");
+  quoteEl.classList.remove("skel", "quote-in");
+  void quoteEl.offsetWidth; // перезапуск fade-анимации при каждой новой мысли
+  quoteEl.classList.add("quote-in");
+  quoteEl.textContent = `«${text}»`;
   $("#quoteAuthor").textContent = author ? `— ${author}` : "";
   const tag = $("#quoteSource");
   tag.textContent = label;
@@ -232,24 +253,32 @@ async function loadQuote(topic = currentTopic) {
   tag.textContent = "загружаем…";
   tag.classList.remove("warn");
   $("#quoteText").classList.add("skel");
+  const quoteBtn = $("#quoteBtn");
+  quoteBtn?.classList.add("loading"); // спиннер на время запросов
+  if (quoteBtn) quoteBtn.disabled = true;
 
-  if (topic !== "all" && TOPIC_QUOTES[topic]) {
-    const list = TOPIC_QUOTES[topic];
-    const item = list[Math.floor(Math.random() * list.length)];
-    renderQuote(item.text, item.author, item.label);
-    return;
-  }
-
-  for (const src of QUOTE_SOURCES) {
-    try {
-      const q = await src.get();
-      renderQuote(q.text, q.author, src.label + " · " + q.source);
-      saveThought({ date: new Date().toDateString(), text: q.text, author: q.author, label: src.label + " · " + q.source });
+  try {
+    if (topic !== "all" && TOPIC_QUOTES[topic]) {
+      const list = TOPIC_QUOTES[topic];
+      const item = list[Math.floor(Math.random() * list.length)];
+      renderQuote(item.text, item.author, item.label);
       return;
-    } catch { /* пробуем следующий источник */ }
+    }
+
+    for (const src of QUOTE_SOURCES) {
+      try {
+        const q = await src.get();
+        renderQuote(q.text, q.author, src.label + " · " + q.source);
+        saveThought({ date: new Date().toDateString(), text: q.text, author: q.author, label: src.label + " · " + q.source });
+        return;
+      } catch { /* пробуем следующий источник */ }
+    }
+    const q = FALLBACK_QUOTES[Math.floor(Math.random() * FALLBACK_QUOTES.length)];
+    renderQuote(q.text, q.author, "офлайн-подборка", true);
+  } finally {
+    quoteBtn?.classList.remove("loading");
+    if (quoteBtn) quoteBtn.disabled = false;
   }
-  const q = FALLBACK_QUOTES[Math.floor(Math.random() * FALLBACK_QUOTES.length)];
-  renderQuote(q.text, q.author, "офлайн-подборка", true);
 }
 
 // Переключение рубрик мудрости
@@ -289,6 +318,10 @@ const PATTERNS = [
     phases: [ { t: "Вдох", d: 3, s: 0.88 }, { t: "Довдох", d: 1.5, s: 1.0 }, { t: "Выдох", d: 6, s: 0.55 } ] },
   { name: "7 · 8", sub: "для засыпания: очень медленный ритм",
     phases: [ { t: "Вдох", d: 7, s: 1 }, { t: "Выдох", d: 8, s: 0.55 } ] },
+  { name: "Треугольник 4·4·4", sub: "ровный фокус и собранность",
+    phases: [ { t: "Вдох", d: 4, s: 1 }, { t: "Задержка", d: 4, s: null }, { t: "Выдох", d: 4, s: 0.55 } ] },
+  { name: "Гавань 4·2·6", sub: "мягкое убежище при волнении",
+    phases: [ { t: "Вдох", d: 4, s: 1 }, { t: "Пауза", d: 2, s: null }, { t: "Выдох", d: 6, s: 0.55 } ] },
 ];
 
 let breathRunning = false;
@@ -1439,8 +1472,9 @@ function anchorBell() {
 const STATS_KEY = "zenStats";
 
 function loadStats() {
-  try { return JSON.parse(localStorage.getItem(STATS_KEY)) || { sessions: 0, minutes: 0, streak: 0, last: null }; }
-  catch { return { sessions: 0, minutes: 0, streak: 0, last: null }; }
+  try {
+    return JSON.parse(localStorage.getItem(STATS_KEY)) || { sessions: 0, minutes: 0, streak: 0, last: null, days: {} };
+  } catch { return { sessions: 0, minutes: 0, streak: 0, last: null, days: {} }; }
 }
 
 function renderStats() {
@@ -1450,6 +1484,28 @@ function renderStats() {
   set("statMinutes", s.minutes);
   set("statStreak", s.streak);
   set("statStreakMini", s.streak);
+  // Поддерживающий empty-state вместо нулей
+  set("statHint", s.sessions
+    ? "Каждая завершённая сессия и экспресс-техника — плюс к прогрессу."
+    : "Здесь появится ваша практика — начните с одной минуты дыхания. 🌱");
+  // Бары практики за последние 7 дней (карточка «Практика»)
+  const spark = document.getElementById("statSpark");
+  if (spark) {
+    const days = s.days || {};
+    const bars = [];
+    let max = 0;
+    for (let i = 6; i >= 0; i--) {
+      const m = days[new Date(Date.now() - i * 86400000).toDateString()] || 0;
+      bars.push(m);
+      if (m > max) max = m;
+    }
+    spark.innerHTML = bars
+      .map((m, i) => {
+        const h = max ? Math.max(10, Math.round((m / max) * 100)) : 10;
+        return `<i class="${m ? "" : "empty"}" style="height:${h}%;animation-delay:${i * 60}ms"></i>`;
+      })
+      .join("");
+  }
 }
 
 function statsAdd(minutes) {
@@ -1457,13 +1513,24 @@ function statsAdd(minutes) {
   s.sessions++;
   s.minutes = Math.round(s.minutes + minutes);
   const today = new Date();
-  if (s.last !== today.toDateString()) {
+  const key = today.toDateString();
+  // Дневная история для баров карточки «Практика» (держим ~60 дней)
+  s.days = s.days || {};
+  s.days[key] = Math.round(((s.days[key] || 0) + minutes) * 10) / 10;
+  const cutoff = Date.now() - 60 * 86400000;
+  for (const d of Object.keys(s.days)) {
+    if (new Date(d).getTime() < cutoff) delete s.days[d];
+  }
+  if (s.last !== key) {
     const yesterday = new Date(today.getTime() - 86400000).toDateString();
     s.streak = s.last === yesterday ? s.streak + 1 : 1;
-    s.last = today.toDateString();
+    s.last = key;
   }
   try { localStorage.setItem(STATS_KEY, JSON.stringify(s)); } catch { /* ignore */ }
   renderStats();
+  // лёгкий «bump» пилля стрика при завершении практики
+  const pill = document.querySelector(".streak-pill");
+  if (pill) { pill.classList.remove("bump"); void pill.offsetWidth; pill.classList.add("bump"); }
 }
 
 /* ------------------------- Голосовые подсказки ------------------------- */
@@ -1538,6 +1605,8 @@ const PHRASES = {
     "Отлично. Вы справляетесь.",
     "Хорошо. Не спешите.",
     "Плавно и спокойно. Продолжайте.",
+    "Дыхание само находит ритм. Отпустите контроль.",
+    "Каждый цикл — маленькая пауза для ума.",
   ],
 };
 
@@ -1570,7 +1639,8 @@ const TOD_RU = { morning: "утро", day: "день", evening: "вечер", ni
 
 function initDayTheme() {
   let tod = timeOfDayName();
-  const forced = localStorage.getItem("zenTodNight"); // "1" — ночь, "2" — глубокая ночь (OLED)
+  let forced = null;
+  try { forced = localStorage.getItem("zenTodNight"); } catch { /* приватный режим */ } // "1" — ночь, "2" — OLED
   if (forced === "1" || forced === "2") tod = "night";
   const oled = forced === "2";
   document.body.dataset.time = tod;
@@ -1595,16 +1665,20 @@ applySeason();
 // Цикл кнопки: авто-освещение → ночь → глубокая ночь (OLED) → авто
 const themeBtn = $("#themeBtn");
 function syncThemeBtn() {
-  const f = localStorage.getItem("zenTodNight");
-  themeBtn.textContent = f === "1" ? "● Ночь+" : f === "2" ? "☀ День" : "☾ Ночь";
+  let f = null;
+  try { f = localStorage.getItem("zenTodNight"); } catch { /* приватный режим */ }
+  themeBtn.textContent = f === "1" ? "●" : f === "2" ? "☀" : "☾"; // тихая иконка вместо текста
   themeBtn.title = f === "1" ? "Глубокая ночная тема — почти чёрный OLED-фон"
     : f === "2" ? "Вернуть обычное освещение" : "Тёмная тема";
+  themeBtn.setAttribute("aria-label", `Тема: ${themeBtn.title}`);
 }
 themeBtn.addEventListener("click", () => {
-  const f = localStorage.getItem("zenTodNight");
-  if (f === "1") localStorage.setItem("zenTodNight", "2");
-  else if (f === "2") localStorage.removeItem("zenTodNight");
-  else localStorage.setItem("zenTodNight", "1");
+  try {
+    const f = localStorage.getItem("zenTodNight");
+    if (f === "1") localStorage.setItem("zenTodNight", "2");
+    else if (f === "2") localStorage.removeItem("zenTodNight");
+    else localStorage.setItem("zenTodNight", "1");
+  } catch { /* приватный режим */ }
   initDayTheme();
   syncThemeBtn();
 });
@@ -1612,8 +1686,10 @@ syncThemeBtn();
 
 // Явный выбор темы (используется панелью настроек)
 function setThemePref(v) {
-  if (v) localStorage.setItem("zenTodNight", v);
-  else localStorage.removeItem("zenTodNight");
+  try {
+    if (v) localStorage.setItem("zenTodNight", v);
+    else localStorage.removeItem("zenTodNight");
+  } catch { /* приватный режим */ }
   initDayTheme();
   syncThemeBtn();
 }
@@ -1758,6 +1834,34 @@ const TECHNIQUES = [
       { d: 20, t: "Сделайте вдох в живот. Вы прямо здесь, в этой секунде" },
     ],
   },
+  {
+    title: "Стоп-кадр S.T.O.P.", emoji: "🛑", dur: "1.5 мин",
+    steps: [
+      { d: 15, t: "S — Stop. Остановитесь. Замрите на мгновение" },
+      { d: 20, t: "T — Take a breath. Медленный вдох и долгий выдох" },
+      { d: 25, t: "O — Observe. Что в теле, что вокруг? Просто заметьте" },
+      { d: 20, t: "P — Proceed. Продолжайте дело — чуть спокойнее, чем раньше" },
+    ],
+  },
+  {
+    title: "Пауза между делами", emoji: "⏳", dur: "1 мин",
+    steps: [
+      { d: 15, t: "Завершите дело — и не хватайтесь за следующее мгновенно" },
+      { d: 20, t: "Три медленных вдоха-выдоха. Руки на колени, плечи вниз" },
+      { d: 15, t: "Что вы чувствуете? Назовите одним словом" },
+      { d: 10, t: "Теперь — осознанно откройте следующий шаг" },
+    ],
+  },
+  {
+    title: "Сканирование рук", emoji: "🤲", dur: "2 мин",
+    steps: [
+      { d: 20, t: "Вытяните руки перед собой. Посмотрите на ладони" },
+      { d: 25, t: "Сожмите кулаки — и медленно раскройте. Почувствуйте тепло" },
+      { d: 25, t: "Разотрите ладони до тепла и мягко приложите к глазам" },
+      { d: 20, t: "Опустите руки. Заметьте покалывание в пальцах" },
+      { d: 15, t: "Руки — ваш якорь. Вы здесь" },
+    ],
+  },
 ];
 
 let ovGen = 0;
@@ -1803,7 +1907,21 @@ overlay.addEventListener("click", (e) => {
 });
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && !overlay.hidden) closeOverlay();
+  if (e.key === "Tab" && !overlay.hidden) trapFocus(overlay, e); // фокус живёт внутри модалки
 });
+
+// Циклим Tab внутри контейнера модалки (ловушка фокуса)
+function trapFocus(container, e) {
+  const focusable = [...container.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')]
+    .filter((el) => !el.disabled && !el.hidden && el.getBoundingClientRect().width > 0);
+  if (!focusable.length) return;
+  const first = focusable[0], last = focusable[focusable.length - 1];
+  if (e.shiftKey && (document.activeElement === first || !container.contains(document.activeElement))) {
+    e.preventDefault(); last.focus();
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault(); first.focus();
+  }
+}
 
 const techRow = $("#techRow");
 TECHNIQUES.forEach((t) => {
@@ -1843,6 +1961,7 @@ $("#focusExit").addEventListener("click", () => setFocusMode(false));
 let sleepTimeout = null;
 
 function stopAllSounds() {
+  if (curBinaural) setBinaural(null); // бинауральный гул — тоже звук, гасим вместе со всеми
   musicAudio.pause();
   showTrack(null);
   const musicBtn = document.querySelector('[data-sound="music"]');
@@ -2077,6 +2196,8 @@ document.addEventListener("keydown", (e) => {
   const tag = (e.target.tagName || "").toLowerCase();
   if (tag === "input" || tag === "textarea" || tag === "select") return;
   if (e.code === "Space") {
+    // кнопки и ссылки в фокусе активируются пробелом как обычно — не мешаем
+    if (e.target.closest?.('button, a, [role="button"], canvas, [tabindex]')) return;
     e.preventDefault();
     breathRunning ? stopBreath() : startBreath();
   }
@@ -2117,6 +2238,17 @@ $("#quoteCopy").addEventListener("click", async () => {
   }
 });
 
+// ✦ Поделиться мыслью: нативный шеринг (кнопка видна только там, где он есть)
+const shareBtn = $("#quoteShare");
+if (shareBtn && navigator.share) shareBtn.hidden = false;
+shareBtn?.addEventListener("click", async () => {
+  const t = $("#quoteText").textContent.replace(/[«»]/g, "").trim();
+  const a = $("#quoteAuthor").textContent.replace(/^—\s*/, "").trim();
+  try {
+    await navigator.share({ title: "Тихий ум", text: a ? `${t} — ${a}` : t });
+  } catch { /* пользователь отменил — это не ошибка */ }
+});
+
 // Мысль обновляется сама каждые 5 минут — контент не «засыхается»
 setInterval(() => {
   if (overlay.hidden && document.visibilityState === "visible") loadQuote();
@@ -2129,6 +2261,36 @@ updatePatternHint();
 renderTimer();
 renderStats();
 
+// Цифры «Практики» оживают при первом появлении карточки на экране
+let statsCounted = false;
+function countUpStats() {
+  if (statsCounted) return;
+  statsCounted = true;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return; // значения уже финальные
+  const s = loadStats();
+  const anim = (id, target, dur = 900) => {
+    const el = document.getElementById(id);
+    if (!el || !target) return;
+    const t0 = performance.now();
+    const step = (t) => {
+      const k = Math.min(1, (t - t0) / dur);
+      el.textContent = Math.round(target * (1 - Math.pow(1 - k, 3))); // ease-out cubic
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+  anim("statSessions", s.sessions);
+  anim("statMinutes", s.minutes);
+  anim("statStreak", s.streak);
+}
+const statsCardEl = document.getElementById("stats");
+if (statsCardEl && "IntersectionObserver" in window) {
+  const statsIO = new IntersectionObserver((entries) => {
+    if (entries.some((en) => en.isIntersecting)) { countUpStats(); statsIO.disconnect(); }
+  }, { threshold: 0.4 });
+  statsIO.observe(statsCardEl);
+}
+
 /* ------------------------- Появление секций при прокрутке ------------------------- */
 
 let revealT = null;
@@ -2136,10 +2298,31 @@ window.addEventListener(
   "scroll",
   () => {
     if (revealT) return;
-    revealT = setTimeout(() => { revealT = null; revealCheck(); navSpyCheck(); }, 120);
+    revealT = setTimeout(() => { revealT = null; revealCheck(); navSpyCheck(); topbarCompact(); }, 120);
   },
   { passive: true }
 );
+
+// Топбар уплотняется, когда страница ушла вниз
+function topbarCompact() {
+  document.querySelector(".topbar")?.classList.toggle("compact", window.scrollY > 24);
+}
+topbarCompact();
+
+/* 📴 Офлайн-бейдж: приложение не ломается без сети — честно сообщаем об этом */
+const offlineBadge = document.createElement("span");
+offlineBadge.className = "offline-badge";
+offlineBadge.textContent = "📴 офлайн";
+offlineBadge.hidden = navigator.onLine !== false;
+document.querySelector(".tb-actions")?.prepend(offlineBadge);
+window.addEventListener("online", () => {
+  offlineBadge.hidden = true;
+  toast("🌐 Сеть вернулась.");
+});
+window.addEventListener("offline", () => {
+  offlineBadge.hidden = false;
+  toast("📴 Нет сети — «Тихий ум» продолжит работать.");
+});
 
 /* Плавное появление секций при прокрутке */
 function revealCheck() {
@@ -2379,7 +2562,8 @@ function openSettings(open) {
 function renderSettings() {
   // Тема — явный выбор вместо цикла
   const themeBox = $("#spTheme");
-  const curT = localStorage.getItem("zenTodNight") || "";
+  let curT = "";
+  try { curT = localStorage.getItem("zenTodNight") || ""; } catch { /* ignore */ }
   themeBox.innerHTML = "";
   [["", "✨ Авто"], ["1", "☾ Ночь"], ["2", "● Глубокая"]].forEach(([v, name]) => {
     const b = document.createElement("button");
@@ -2620,6 +2804,9 @@ paletteList.addEventListener("click", (e) => {
 paletteBackdrop.addEventListener("click", (e) => {
   if (e.target === paletteBackdrop) closePalette();
 });
+paletteBackdrop.addEventListener("keydown", (e) => {
+  if (e.key === "Tab") trapFocus(paletteBackdrop, e); // Tab не уводит из пульта
+});
 document.addEventListener("keydown", (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
     e.preventDefault();
@@ -2640,18 +2827,19 @@ let binNodes = null;
 
 function setBinaural(mode) {
   ensureAudio();
-  if (binNodes) {
-    try {
-      const now = AC.currentTime;
-      binNodes.g.gain.setTargetAtTime(0.0001, now, 0.2);
-      setTimeout(() => {
-        try {
-          binNodes.oscL.stop(); binNodes.oscR.stop();
-          binNodes.oscL.disconnect(); binNodes.oscR.disconnect();
-        } catch {}
-        binNodes = null;
-      }, 300);
-    } catch {}
+  const old = binNodes; // захватываем ссылку: таймер не должен трогать узлы нового режима
+  if (old) {
+    const now = AC.currentTime;
+    old.g.gain.cancelScheduledValues(now);
+    old.g.gain.setTargetAtTime(0.0001, now, 0.2);
+    setTimeout(() => {
+      try {
+        old.oscL.stop(); old.oscR.stop();
+        old.oscL.disconnect(); old.oscR.disconnect();
+        old.g.disconnect();
+      } catch (e) { /* узлы уже остановлены */ }
+      if (binNodes === old) binNodes = null; // guard: не убивать ссылку на новый режим
+    }, 300);
   }
   curBinaural = mode;
   document.querySelectorAll(".bin-btn").forEach((b) => b.classList.toggle("active", (b.dataset.hz || "0") === (mode || "0")));
@@ -2692,18 +2880,28 @@ let stones = [];
 let ripples = [];
 let isDrawing = false;
 let lastPt = null;
+let wakePond = null; // будилка ленивого rAF-цикла воды: без ряби цикл спит
+let pondFlush = 0;   // кадры «мытья» холста вуалью после исчезновения ряби
+let pondSnapshot = null; // снимок песка до первой ряби — вода не оставляет следов
 
 function initZenGarden() {
   const canvas = document.getElementById("zenCanvas");
   if (!canvas) return;
-  canvas.style.touchAction = "none";
-  canvas.addEventListener("touchstart", (e) => e.preventDefault(), { passive: false });
-  canvas.addEventListener("touchmove", (e) => e.preventDefault(), { passive: false });
   const ctx = canvas.getContext("2d");
   if (!zenGardenInit) {
     zenGardenInit = true;
-    canvas.width = 560;
-    canvas.height = 400;
+
+    // Единая установка: повторные входы на вкладку не плодят листенеры
+    canvas.style.touchAction = "none";
+    canvas.addEventListener("touchstart", (e) => e.preventDefault(), { passive: false });
+    canvas.addEventListener("touchmove", (e) => e.preventDefault(), { passive: false });
+
+    // Рендер × devicePixelRatio: песок и камни резкие на retina,
+    // внутри — логические координаты 560×400
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = 560 * dpr;
+    canvas.height = 400 * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     clearZenGarden(ctx);
 
     const getPos = (e) => {
@@ -2711,8 +2909,8 @@ function initZenGarden() {
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
       return {
-        x: (clientX - rect.left) * (canvas.width / rect.width),
-        y: (clientY - rect.top) * (canvas.height / rect.height),
+        x: (clientX - rect.left) * (560 / rect.width),
+        y: (clientY - rect.top) * (400 / rect.height),
       };
     };
 
@@ -2751,6 +2949,7 @@ function initZenGarden() {
     canvas.addEventListener("touchend", endDraw);
 
     canvas.addEventListener("dblclick", (e) => {
+      if (gardenMode === "stone") return; // в режиме камней mousedown уже поставил камни
       const pt = getPos(e);
       addStone(pt.x, pt.y, ctx);
     });
@@ -2768,11 +2967,29 @@ function initZenGarden() {
       toast("Сад Дзен разглажен.");
     });
 
+    // Ленивый цикл воды: тикает, пока идут круги, затем чуть «домывает»
+    // вуалью и возвращает холст к снимку до ряби — и засыпает (батарея целая)
+    let pondAnimId = null;
     function animPond() {
-      if (ripples.length > 0) redrawPond(ctx);
-      requestAnimationFrame(animPond);
+      pondAnimId = null;
+      if (ripples.length > 0) {
+        pondFlush = 40; // пока круги живут — держим запас мытья
+        redrawPond(ctx);
+      } else if (pondFlush > 0) {
+        pondFlush--;
+        redrawPond(ctx);
+      } else {
+        if (pondSnapshot) {
+          ctx.putImageData(pondSnapshot, 0, 0); // песок в точности как до воды
+          pondSnapshot = null;
+        }
+        return; // отмыто — спим
+      }
+      pondAnimId = requestAnimationFrame(animPond);
     }
-    requestAnimationFrame(animPond);
+    wakePond = () => {
+      if (pondAnimId === null) pondAnimId = requestAnimationFrame(animPond);
+    };
   }
 }
 
@@ -2797,6 +3014,8 @@ function clearZenGarden(ctx) {
     { x: 420, y: 200, r: 18, a: 0.15 },
   ];
   ripples = [];
+  pondFlush = 0; // свежий песок не нуждается в домывании
+  pondSnapshot = null;
   stones.forEach((s) => drawStone(ctx, s.x, s.y, s.r, s.a));
 }
 
@@ -2878,7 +3097,13 @@ function drawStone(ctx, x, y, r, a) {
 }
 
 function addRipple(x, y) {
+  // Первый круг серии: запомнить холст, чтобы после домывки вернуть песок как был
+  if (!pondSnapshot) {
+    const canvas = document.getElementById("zenCanvas");
+    if (canvas) pondSnapshot = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height);
+  }
   ripples.push({ x, y, r: 6, maxR: 70 + Math.random() * 40, alpha: 0.85 });
+  wakePond?.(); // разбудить анимацию воды, если она спала
 }
 
 function redrawPond(ctx) {
@@ -2950,6 +3175,7 @@ let sceneryCtx = null;
 let sceneryMode = "fire";
 let sceneryAnimId = null;
 let sceneryItems = [];
+let meteors = []; // падающие звёзды (режим «Звёздный космос»)
 
 let lastFocusEl = null;
 function openScenery(on) {
@@ -3003,8 +3229,11 @@ if (sceneryOverlay) {
 
 function resizeScenery() {
   if (!sceneryCanvas) return;
-  sceneryCanvas.width = window.innerWidth;
-  sceneryCanvas.height = window.innerHeight;
+  // Рендер × devicePixelRatio: сцены резкие на retina; внутри — CSS-пиксели
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  sceneryCanvas.width = window.innerWidth * dpr;
+  sceneryCanvas.height = window.innerHeight * dpr;
+  sceneryCtx?.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 window.addEventListener("resize", () => {
   if (!sceneryOverlay?.hidden) resizeScenery();
@@ -3012,7 +3241,8 @@ window.addEventListener("resize", () => {
 
 function initSceneryMode() {
   sceneryItems = [];
-  const w = sceneryCanvas.width, h = sceneryCanvas.height;
+  meteors = [];
+  const w = window.innerWidth, h = window.innerHeight; // логические CSS-пиксели
   if (sceneryMode === "fire") {
     for (let i = 0; i < 90; i++) {
       sceneryItems.push({
@@ -3049,7 +3279,7 @@ function initSceneryMode() {
 function loopScenery() {
   if (sceneryOverlay.hidden) return;
   const ctx = sceneryCtx;
-  const w = sceneryCanvas.width, h = sceneryCanvas.height;
+  const w = window.innerWidth, h = window.innerHeight; // логические CSS-пиксели
 
   if (sceneryMode === "fire") {
     ctx.fillStyle = "rgba(8, 5, 4, 0.25)";
@@ -3088,6 +3318,35 @@ function loopScenery() {
       ctx.beginPath();
       ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
       ctx.fillStyle = `rgba(220, 235, 255, ${alpha})`;
+      ctx.fill();
+    });
+    // Редкие падающие звёзды с тающим градиентным хвостом
+    if (Math.random() < 0.014 && meteors.length < 2) {
+      meteors.push({
+        x: w * 0.15 + Math.random() * w * 0.7,
+        y: h * 0.05 + Math.random() * h * 0.3,
+        vx: 4.5 + Math.random() * 4,
+        vy: 2 + Math.random() * 2.2,
+        life: 1,
+      });
+    }
+    meteors = meteors.filter((m) => m.life > 0);
+    meteors.forEach((m) => {
+      m.x += m.vx; m.y += m.vy; m.life -= 0.013;
+      const tailX = m.x - m.vx * 14, tailY = m.y - m.vy * 14;
+      const grad = ctx.createLinearGradient(m.x, m.y, tailX, tailY);
+      grad.addColorStop(0, `rgba(255, 255, 255, ${Math.max(0, m.life)})`);
+      grad.addColorStop(1, "rgba(255, 255, 255, 0)");
+      ctx.beginPath();
+      ctx.moveTo(m.x, m.y);
+      ctx.lineTo(tailX, tailY);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 2;
+      ctx.lineCap = "round";
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(m.x, m.y, 2, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0, m.life)})`;
       ctx.fill();
     });
   } else if (sceneryMode === "ocean") {

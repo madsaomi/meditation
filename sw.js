@@ -12,7 +12,7 @@
 //  style.css / config.js — старые кеши удалятся автоматически.
 // ============================================================
 
-const CACHE_VERSION = 'v47';
+const CACHE_VERSION = 'v51';
 const CACHE_NAME = `tihiy-um-${CACHE_VERSION}`;
 
 const APP_SHELL = [
@@ -23,6 +23,10 @@ const APP_SHELL = [
   `config.js?v=${CACHE_VERSION}`,
   `manifest.webmanifest?v=${CACHE_VERSION}`,
   'icon.svg',
+  'icon-192.png',
+  'icon-512.png',
+  'icon-maskable-512.png',
+  'apple-touch-icon.png',
 ];
 
 // --- install: прекешируем оболочку ---
@@ -58,18 +62,20 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url);
 
-  // 1) Навигация: сеть → кеш → офлайн-страница
+  // 1) Навигация: сеть → кеш → офлайн-страница.
+  //    Кешируем под фактический URL навигации, чтобы чужая страница
+  //    (например, 404 на GitHub Pages) не подменяла ключ index.html.
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
         .then((response) => {
           const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put('index.html', copy));
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
           return response;
         })
         .catch(() =>
           caches
-            .match('index.html')
+            .match(request)
             .then((cached) => cached || caches.match('./'))
             .then((cached) => cached || Response.error())
         )
